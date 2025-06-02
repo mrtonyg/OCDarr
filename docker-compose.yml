@@ -1,3 +1,6 @@
+# OCDarr Production Docker Compose
+# Use this for production deployments with the pre-built image
+
 version: '3.8'
 services:
   sonarr_script:
