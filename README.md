@@ -154,7 +154,7 @@ Tickers automatically refresh every 30 minutes to ensure you always see the late
 docker pull vansmak/ocdarr:amd64_dev
 ```
 # Run the container
-```
+```bash
 docker run -d \
   --name ocdarr \
   --env-file .env \
@@ -163,66 +163,84 @@ docker run -d \
   -v ${PWD}/logs:/app/logs \
   -v ${PWD}/config:/app/config \
   -v ${PWD}/temp:/app/temp \
-  -v ${PWD}/static:/app/static \
-  -v ${PWD}/templates:/app/templates \
   --restart unless-stopped \
   vansmak/ocdarr:amd64_dev
 ```
-Option 2: Build from Source
-```
-  git clone https://github.com/Vansmak/OCDarr.git
-  cd OCDarr
-  git checkout dev
-  docker-compose up -d --build
 
+## Option 2: Build from Source (Development)
+```bash
+git clone https://github.com/Vansmak/OCDarr.git
+cd OCDarr
+git checkout dev
+docker-compose up -d --build
 ```
-⚙️ Configuration
-Environment Variables
+
+## ⚙️ Configuration
+
+### Environment Variables
 Create a .env file:
+```env
+SONARR_URL=url:port
+SONARR_API_KEY=YOUR_SONARR_API_KEY_HERE 
+JELLYSEERR_URL=url:port #LEAVE LABEL AS JELLYSEER BUT USE YOUR OVERSEER URL AND API
+JELLYSEERR_API_KEY=api_key
+RADARR_URL=url:port
+RADARR_API_KEY=api_key
+TMDB_API_KEY=reallylongtmdbkey
+PLEX_URL=plex_url:port
+PLEX_TOKEN=plex_token
+MAX_TMDB_ITEMS=24
+MAX_SHOWS_ITEMS=24
+MAX_MOVIES_ITEMS=24
+```
 
-```
-  SONARR_URL=url:port
-  SONARR_API_KEY=YOUR_SONARR_API_KEY_HERE 
-  JELLYSEERR_URL=url:port #LEAVE LABEL AS JELLYSEER BUT USE YOU OVERSEER URL AND API
-  JELLYSEERR_API_KEY=api_key
-  RADARR_URL=url:port
-  RADARR_API_KEY=api_key
-  TMDB_API_KEY=reallylongtmdbkey
-  PLEX_URL=plex_url:port
-  PLEX_TOKEN=plex_token
-  MAX_TMDB_ITEMS=24
-  MAX_SHOWS_ITEMS=24
-  MAX_MOVIES_ITEMS=24
-  
-```
-Docker Compose
-```
+### Docker Compose (Production)
+```yaml
 version: '3.8'
 services:
   ocdarr:
     image: vansmak/ocdarr:amd64_dev
     environment:
-      - SONARR_URL: ${SONARR_URL}
-      - SONARR_API_KEY: ${SONARR_API_KEY}
-      - JELLYSEERR_URL: ${JELLYSEERR_URL}
-      - JELLYSEERR_API_KEY: ${JELLYSEERR_API_KEY}
-      - RADARR_URL: ${RADARR_URL}
-      - RADARR_API_KEY: ${RADARR_API_KEY}
-      - TMDB_API_KEY: ${TMDB_API_KEYL}
-      - CONFIG_PATH: /app/config/config.json
-      - PLEX_URL: plex_url:port
-      - PLEX_TOKEN: plex_token
-      - MAX_TMDB_ITEMS: 24
-      - MAX_SHOWS_ITEMS: 24
-      - MAX_MOVIES_ITEMS: 24
+      - SONARR_URL=${SONARR_URL}
+      - SONARR_API_KEY=${SONARR_API_KEY}
+      - JELLYSEERR_URL=${JELLYSEERR_URL}
+      - JELLYSEERR_API_KEY=${JELLYSEERR_API_KEY}
+      - RADARR_URL=${RADARR_URL}
+      - RADARR_API_KEY=${RADARR_API_KEY}
+      - TMDB_API_KEY=${TMDB_API_KEY}
+      - CONFIG_PATH=/app/config/config.json
+      - PLEX_URL=${PLEX_URL}
+      - PLEX_TOKEN=${PLEX_TOKEN}
+      - MAX_TMDB_ITEMS=24
+      - MAX_SHOWS_ITEMS=24
+      - MAX_MOVIES_ITEMS=24
     env_file:
       - .env
     volumes:
-      - /mnt/media/OCDarr3/logs:/app/logs
-      - /mnt/media/OCDarr3/config:/app/config
-      - /mnt/media/OCDarr3/temp:/app/temp
-      - /mnt/media/OCDarr3/static:/app/static 
-      - /mnt/media/OCDarr3/templates:/app/templates
+      - ./logs:/app/logs
+      - ./config:/app/config
+      - ./temp:/app/temp
+      # DO NOT mount templates or static - they're included in the Docker image
+    ports:
+      - "5002:5002"
+    restart: unless-stopped
+```
+
+### Docker Compose (Development)
+```yaml
+version: '3.8'
+services:
+  ocdarr:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - .:/app  # Mount entire directory for development
+      - ./logs:/app/logs
+      - ./config:/app/config
+      - ./temp:/app/temp
     ports:
       - "5002:5002"
     restart: unless-stopped
