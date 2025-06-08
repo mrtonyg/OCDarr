@@ -1,3 +1,72 @@
+# ⚠️ Project Status Update
+
+## OCDarr Project Branches
+
+| Branch | Status | Recommendation |
+|--------|--------|----------------|
+| **OCDarr (main)** | ✅ **Active Development** | Continue using |
+| **OCDarr Lite** | ❌ **Discontinued** | **Migrate to [Episeerr](https://github.com/vansmak/episeerr)** |
+
+---
+
+## 🚨 For OCDarr Lite Users
+
+**OCDarr Lite is discontinued.** Please migrate to **[Episeerr](https://github.com/vansmak/episeerr)** which provides the same functionality with significant improvements.
+
+### Why Episeerr?
+- **Enhanced episode selection** across multiple seasons
+- **Improved rule system** with better cleanup options
+- **Better integration** with Jellyseerr/Overseerr
+- **Active development** and support
+- **Same familiar workflow** with added features
+
+### Quick Migration
+```bash
+# Old OCDarr Lite
+docker pull vansmak/ocdarr-lite:latest
+
+# New Episeerr  
+docker pull vansmak/episeerr:latest
+```
+
+**📖 Migration Guide:** https://github.com/vansmak/episeerr/blob/main/docs/installation.md
+
+---
+
+## 🎯 Project Roadmap
+
+### OCDarr (Full) - Continued Development
+- Advanced media management features
+- Extended request system capabilities
+- Enhanced UI/UX improvements
+
+### Episeerr - OCDarr Lite Successor  
+- **All OCDarr Lite functionality** + enhancements
+- Multi-season episode selection
+- Improved webhook processing
+- Better rule management
+
+---
+
+## 💬 Support & Migration Help
+
+- **Episeerr Issues:** https://github.com/vansmak/episeerr/issues
+- **OCDarr Issues:** Use this repository's issues
+- **Migration Questions:** https://github.com/vansmak/episeerr/discussions
+
+---
+
+## 📦 Last OCDarr Lite Release
+
+If you absolutely need OCDarr Lite for legacy setups:
+- **Final Version:** `v2.1.1`
+- **Docker Image:** `vansmak/ocdarr-lite:v2.1.1`
+- **⚠️ No further support provided**
+
+---
+
+*Thank you for using OCDarr! We recommend migrating to Episeerr for the best experience with continued support and new features.*
+
 # OCDarr: Smart Episode Management for Sonarr
 
 **Intelligent, time-aware episode management** that responds to your viewing habits and automatically maintains your library based on activity patterns.
