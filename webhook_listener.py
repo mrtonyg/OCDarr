@@ -29,6 +29,9 @@ BASE_DIR = os.getcwd()
 # Sonarr variables
 SONARR_URL = os.getenv('SONARR_URL')
 SONARR_API_KEY = os.getenv('SONARR_API_KEY')
+# Browser-reachable base URL for the template's client-facing image src.
+# Falls back to SONARR_URL so deployments that don't set it are unaffected.
+SONARR_PUBLIC_URL = os.getenv('SONARR_PUBLIC_URL', SONARR_URL)
 
 # Radarr variables
 RADARR_URL = os.getenv('RADARR_URL')
@@ -1392,7 +1395,7 @@ def home():
                         current_series=combined_watching,
                         upcoming_premieres=combined_upcoming,
                         all_series=all_series,
-                        sonarr_url=SONARR_URL,
+                        sonarr_url=SONARR_PUBLIC_URL,
                         radarr_url=RADARR_URL,
                         jellyseerr_url=JELLYSEERR_URL,
                         rule=request.args.get('rule', 'full_seasons'),

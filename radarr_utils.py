@@ -11,6 +11,12 @@ load_dotenv()
 # Configuration settings from environment variables
 RADARR_URL = os.getenv('RADARR_URL')
 RADARR_API_KEY = os.getenv('RADARR_API_KEY')
+# Separate browser-reachable base URL for image src attributes served to the
+# client. RADARR_URL is often an internal-only address (e.g.
+# host.docker.internal), which the API calls made from inside this container
+# can reach but a user's own browser cannot. Falls back to RADARR_URL so
+# deployments that don't set it behave exactly as before.
+RADARR_PUBLIC_URL = os.getenv('RADARR_PUBLIC_URL', RADARR_URL)
 
 MAX_MOVIES_ITEMS = int(os.getenv('MAX_MOVIES_ITEMS', 24))
 
@@ -85,8 +91,8 @@ def fetch_recent_movies(preferences, limit=None):
                     'name': movie['title'],
                     'year': movie['year'],
                     'type': 'movie',
-                    'artwork_url': f"{RADARR_URL}/api/v3/mediacover/{movie['id']}/poster-500.jpg?apikey={RADARR_API_KEY}",
-                    'radarr_movie_url': f"{RADARR_URL}/movie/{movie['titleSlug']}",
+                    'artwork_url': f"{RADARR_PUBLIC_URL}/api/v3/mediacover/{movie['id']}/poster-500.jpg?apikey={RADARR_API_KEY}",
+                    'radarr_movie_url': f"{RADARR_PUBLIC_URL}/movie/{movie['titleSlug']}",
                     'releaseDate': datetime.fromisoformat(
                         movie.get('movieFile', {}).get('dateAdded', '').replace('Z', '+00:00')
                     ).strftime('%Y-%m-%d')
@@ -181,8 +187,8 @@ def fetch_upcoming_movies(preferences):
                         'type': 'movie',
                         'releaseDate': release_date.strftime('%Y-%m-%d'),
                         'releaseType': release_type,
-                        'artwork_url': f"{RADARR_URL}/api/v3/mediacover/{movie['id']}/poster-500.jpg?apikey={RADARR_API_KEY}",
-                        'radarr_movie_url': f"{RADARR_URL}/movie/{movie['titleSlug']}"
+                        'artwork_url': f"{RADARR_PUBLIC_URL}/api/v3/mediacover/{movie['id']}/poster-500.jpg?apikey={RADARR_API_KEY}",
+                        'radarr_movie_url': f"{RADARR_PUBLIC_URL}/movie/{movie['titleSlug']}"
                     })
             
             # Sort by release date

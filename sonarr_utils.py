@@ -13,6 +13,12 @@ load_dotenv()
 # Configuration settings from environment variables
 SONARR_URL = os.getenv('SONARR_URL')
 SONARR_API_KEY = os.getenv('SONARR_API_KEY')
+# Separate browser-reachable base URL for image src / deep-link attributes
+# served to the client. SONARR_URL is often an internal-only address (e.g.
+# host.docker.internal), which the API calls made from inside this container
+# can reach but a user's own browser cannot. Falls back to SONARR_URL so
+# deployments that don't set it behave exactly as before.
+SONARR_PUBLIC_URL = os.getenv('SONARR_PUBLIC_URL', SONARR_URL)
 HA_WWW_PATH = '/app/backgrounds' 
 
 MAX_SHOWS_ITEMS = int(os.getenv('MAX_SHOWS_ITEMS', 24))
@@ -109,8 +115,8 @@ def fetch_series_and_episodes(preferences):
                     active_series.append({
                         'name': series['title'],
                         'latest_monitored_episode': f"S{episode['seasonNumber']}E{episode['episodeNumber']} - {episode['title']}",
-                        'artwork_url': f"{SONARR_URL}/api/v3/mediacover/{series['id']}/poster.jpg?apikey={SONARR_API_KEY}",
-                        'sonarr_series_url': f"{SONARR_URL}/series/{series['titleSlug']}",
+                        'artwork_url': f"{SONARR_PUBLIC_URL}/api/v3/mediacover/{series['id']}/poster.jpg?apikey={SONARR_API_KEY}",
+                        'sonarr_series_url': f"{SONARR_PUBLIC_URL}/series/{series['titleSlug']}",
                         'dateAdded': date_added,
                         'tag_id': 2 if 2 in series.get('tags', []) else None  # Check if tag_id 2 is in the tags list
                     })
@@ -137,8 +143,8 @@ def fetch_upcoming_premieres(preferences):
                 upcoming_premieres.append({
                     'name': series['title'],
                     'nextAiring': formatted_date,
-                    'artwork_url': f"{SONARR_URL}/api/v3/mediacover/{series['id']}/poster.jpg?apikey={SONARR_API_KEY}",
-                    'sonarr_series_url': f"{SONARR_URL}/series/{series['titleSlug']}"
+                    'artwork_url': f"{SONARR_PUBLIC_URL}/api/v3/mediacover/{series['id']}/poster.jpg?apikey={SONARR_API_KEY}",
+                    'sonarr_series_url': f"{SONARR_PUBLIC_URL}/series/{series['titleSlug']}"
                 })
 
     upcoming_premieres.sort(key=lambda x: x['nextAiring'])

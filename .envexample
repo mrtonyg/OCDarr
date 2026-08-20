@@ -1,5 +1,11 @@
 SONARR_URL=http://localhost:8989
-SONARR_API_KEY=YOUR_SONARR_API_KEY_HERE 
+SONARR_API_KEY=YOUR_SONARR_API_KEY_HERE
+# Optional: only needed if SONARR_URL is an address the container can reach
+# but a browser can't (e.g. host.docker.internal, a Docker service name, or
+# a Tailscale/VPN-only address). Defaults to SONARR_URL when unset. Used only
+# for the poster/banner <img> src and "view in Sonarr" links sent to the
+# browser - all server-to-server API calls keep using SONARR_URL.
+#SONARR_PUBLIC_URL=http://192.168.1.10:8989
 PLEX_TOKEN=plex_token
 PLEX_URL=http://plex_url:32400
 JELLYFIN_TOKEN=jf_token
@@ -9,6 +15,8 @@ JELLYSEERR_URL=http://oversserorjellyseer:5055
 JELLYSEERR_API_KEY=api_key
 RADARR_URL=http://radarr:7878
 RADARR_API_KEY=api_key
+# Optional: same idea as SONARR_PUBLIC_URL, for Radarr. Defaults to RADARR_URL.
+#RADARR_PUBLIC_URL=http://192.168.1.10:7878
 TMDB_API_KEY=thisisanexampleODAwZGJlNTQ0MyIsIm5iZiI6MTczNzU5NDI2Ny45MjMsInN1YiI6IjY3OTE5NTliZWZhODUzMzdjM2ZhNjU5ZSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ._vuHq9pnAJfuOmaRUQbo2aJBX5y960h_44zScE52c4E
 MAX_TMDB_ITEMS=24
 MAX_SHOWS_ITEMS=24
