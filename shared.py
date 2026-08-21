@@ -1,6 +1,7 @@
 from flask import Flask, Blueprint
 import os
 import json
+import uuid
 import logging
 from logging.handlers import RotatingFileHandler
 from dotenv import load_dotenv
@@ -129,3 +130,13 @@ def load_config():
 def save_config(config):
     with open(config_path, 'w') as file:
         json.dump(config, file, indent=4)
+
+def get_webhook_secret():
+    """Return this instance's webhook secret, generating and persisting one on first use."""
+    config = load_config()
+    secret = config.get('webhook_secret')
+    if not secret:
+        secret = str(uuid.uuid4())
+        config['webhook_secret'] = secret
+        save_config(config)
+    return secret

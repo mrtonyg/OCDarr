@@ -390,9 +390,14 @@ def process_seerr_webhook():
         shared.app.logger.error(f"Error processing Jellyseerr webhook: {str(e)}", exc_info=True)
         return jsonify({"status": "error", "message": str(e)}), 500
 
-@bp.route('/webhook', methods=['POST'])
-def handle_server_webhook():
+@bp.route('/webhook/<secret>', methods=['POST'])
+def handle_server_webhook(secret):
     """Handle webhooks from Plex/Tautulli"""
+    if secret != shared.get_webhook_secret():
+        # 404 rather than 403 so a wrong secret isn't distinguishable from a
+        # nonexistent path.
+        return jsonify({'status': 'error', 'message': 'Not found'}), 404
+
     shared.app.logger.info("Received webhook from Tautulli")
     data = request.json
     if data:

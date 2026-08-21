@@ -350,7 +350,8 @@ In Tautulli, go to Settings > Notification Agents
 Click "Add a new notification agent" and select "Webhook"
 Configure the webhook:
 
-Webhook URL: http://your-ocdarr-ip:5002/webhook
+Webhook URL: http://your-ocdarr-ip:5002/webhook/<your-webhook-secret>
+(the secret is auto-generated on first run and stored in config.json as "webhook_secret" — check there for the current value)
 Trigger: Episode Watched
 JSON Data: Use exactly this template:
 ```
