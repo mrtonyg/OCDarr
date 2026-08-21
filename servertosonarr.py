@@ -312,7 +312,6 @@ def main():
             logger.error(f"Series ID not found for series: {series_name}")
     else:
         logger.error("No server activity found.")
-        send_webhook()  # Trigger webhook if no server activity is found
 
 if __name__ == "__main__":
     main()
