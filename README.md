@@ -18,14 +18,14 @@ Manage your movie library with easy access to recently added titles and missing 
 ⬇️ **Requests**  
 Streamlined interface for adding new content requests with season and episode-level precision.
 
-▶️ **Plex Watchlist**  **Jellyfin Favorites** (wip)
+▶️ **Plex Watchlist**  
 watchlist, favorites and stats, see what's missing from your collection.
 
 ⚙️ **Settings**  
 Choose default download profiles and rule configuration.
 
 
-🔬 **Rule-Based Episode Control**  //works with jellyfin or plex
+🔬 **Rule-Based Episode Control**
 The heart of OCDarr - create custom rules to determine exactly how many episodes to monitor, search for, and retain.
 
 ## Perfect For Users Who:
@@ -139,9 +139,7 @@ Tickers automatically refresh every 30 minutes to ensure you always see the late
 ## 📋 Requirements
 
 - Sonarr v3
-- Either:
-  - Plex + Tautulli
-  - OR Jellyfin #not yet
+- Plex + Tautulli
 - Docker environment
 - Overseerr/Jellyseerr (optional, for automatic rule assignment)
 
@@ -365,43 +363,6 @@ JSON Data: Use exactly this template:
 ![webhook3](https://github.com/Vansmak/OCDarr/assets/16037573/24f02a75-2100-4b2a-9137-ce1e68803d1f)![webhook4](https://github.com/Vansmak/OCDarr/assets/16037573/f82198fc-e4c4-40ec-a9c7-551b2d8cdccd)
 
 Important: Adjust your "Watched Percentage" in Tautulli's general settings to control when webhooks trigger.
-
-## Setting Up Jellyfin Webhook for OCDarr
-
-To configure Jellyfin to send playback information to OCDarr, follow these steps:
-
-1. In Jellyfin, navigate to **Dashboard** → **Plugins** → **Webhooks**
-  - If the Webhooks plugin is not installed, you'll need to install it first from the Plugin Catalog
-
-2. Once in the Webhooks section, click **+ Add New Webhook** and configure with these settings:
-
-  - **Webhook Name**: OCDarr Episode Tracking (or any name you prefer)
-  - **Server URL**: Your Jellyfin base URL (for linking to content)
-  - **Webhook URL**: `http://your-ocdarr-ip:5002/jellyfin-webhook`
-  - **Status**: Enabled
-  - **Notification Type**: Select only "Playback Progress"
-  - **User Filter** (Optional): Specific username(s) to track
-  - **Item Type**: Episodes
-  - **Send All Properties**: Enabled
-  - **Content Type**: application/json
-
-3. Under **Request Headers**, add:
-  - **Key**: `Content-Type`
-  - **Value**: `application/json`
-
-4. Click **Save**
-
-### Important Notes:
-
-- OCDarr processes playback events when progress is between 45-55% of the episode (mid-point)
-- Make sure your server can reach your OCDarr instance on port 5002
-- OCDarr will automatically manage episodes according to your configured rules when playback events are received
-
-### Troubleshooting:
-
-- If webhooks aren't being received, check your servers logs for any webhook delivery errors
-- Verify the webhook URL is correctly pointing to your OCDarr instance
-- Ensure OCDarr logs show webhook events being received at `/app/logs/app.log`
 
 ### Jellyseerr/Overseerr Webhook Setup
 

@@ -6,7 +6,6 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='plex-watchlist.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='jellyfin.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <title>OCDarr</title>
 
@@ -613,26 +612,7 @@
             </div>
         </section>
         <section id="plex-tab" class="main-tab" style="display: none;">
-            <!-- Media Server Selector -->
-            <div class="server-selector mb-3">
-                <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-primary active" id="use-plex-btn" onclick="switchMediaServer('plex')">Plex</button>
-                    <button type="button" class="btn btn-secondary" id="use-jellyfin-btn" onclick="switchMediaServer('jellyfin')">Jellyfin</button>
-                </div>
-            </div>
-        
-            <!-- Container that will hold either Plex or Jellyfin content -->
-            <div id="media-server-content">
-                <!-- Plex content loaded by default -->
-                <div id="plex-content">
-                    {% include 'plex-watchlist.html' %}
-                </div>
-                
-                <!-- Jellyfin content (initially hidden) -->
-                <div id="jellyfin-content" style="display: none;">
-                    {% include 'jellyfin-dashboard.html' %}
-                </div>
-            </div>
+            {% include 'plex-watchlist.html' %}
         </section>
 
             <!-- Settings Tab -->

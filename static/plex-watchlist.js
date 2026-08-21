@@ -635,9 +635,6 @@ function loadRequests() {
                 } else if (item.thumb) {
                     // Plex thumbnail
                     posterUrl = item.thumb;
-                } else if (item.jellyfin_id && item.image_tags && item.image_tags.Primary) {
-                    // Jellyfin image
-                    posterUrl = `/api/jellyfin/image/${item.jellyfin_id}/Primary?tag=${item.image_tags.Primary}`;
                 } else if (item.tmdb_id) {
                     // Fallback to TMDB if we have the ID
                     posterUrl = `https://image.tmdb.org/t/p/w300${item.type === 'tv' ? '/tv/' : '/movie/'}${item.tmdb_id}/poster.jpg`;

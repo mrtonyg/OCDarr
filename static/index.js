@@ -152,56 +152,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // After adding content, check if we need to adjust the rows
     adjustScrollableRows();
 });
-// Function to switch between media servers
-function switchMediaServer(server) {
-    // Update button styling
-    if (server === 'plex') {
-        document.getElementById('use-plex-btn').classList.add('active', 'btn-primary');
-        document.getElementById('use-plex-btn').classList.remove('btn-secondary');
-        document.getElementById('use-jellyfin-btn').classList.remove('active', 'btn-primary');
-        document.getElementById('use-jellyfin-btn').classList.add('btn-secondary');
-        
-        // Show Plex content
-        document.getElementById('plex-content').style.display = 'block';
-        document.getElementById('jellyfin-content').style.display = 'none';
-        
-        // Update tab name if you want
-        document.querySelector('.nav-item[data-section="plex"] .nav-text').textContent = 'Plex Watchlist';
-        
-        // Initialize Plex content if needed
-        if (typeof initPlexWatchlist === 'function') {
-            initPlexWatchlist();
-        }
-    } else {
-        document.getElementById('use-jellyfin-btn').classList.add('active', 'btn-primary');
-        document.getElementById('use-jellyfin-btn').classList.remove('btn-secondary');
-        document.getElementById('use-plex-btn').classList.remove('active', 'btn-primary');
-        document.getElementById('use-plex-btn').classList.add('btn-secondary');
-        
-        // Show Jellyfin content
-        document.getElementById('plex-content').style.display = 'none';
-        document.getElementById('jellyfin-content').style.display = 'block';
-        
-        // Update tab name if you want
-        document.querySelector('.nav-item[data-section="plex"] .nav-text').textContent = 'Media Server';
-        
-        // Initialize Jellyfin content if needed
-        if (typeof initJellyfinDashboard === 'function') {
-            initJellyfinDashboard();
-        }
-    }
-    
-    // Save preference to localStorage
-    localStorage.setItem('preferredMediaServer', server);
-}
-
-// On page load, check for saved preference
-document.addEventListener('DOMContentLoaded', function() {
-    const savedServer = localStorage.getItem('preferredMediaServer');
-    if (savedServer) {
-        switchMediaServer(savedServer);
-    }
-});
 // Add this to your index.js file
 function scrollRowToStart(button) {
     const row = button.closest('.row-header').nextElementSibling;

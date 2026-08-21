@@ -6,7 +6,6 @@ import logging
 from logging.handlers import RotatingFileHandler
 from dotenv import load_dotenv
 from api.jellyseerr_api import JellyseerrAPI
-from jellyfin_utils import JellyfinAPI
 
 app = Flask(__name__)
 
@@ -53,11 +52,6 @@ os.makedirs(os.path.dirname(LAST_PROCESSED_FILE), exist_ok=True)
 
 # Initialize the Jellyseerr API client
 jellyseerr_api = JellyseerrAPI()
-
-jellyfin_api = JellyfinAPI(
-    jellyfin_token=os.getenv('JELLYFIN_TOKEN', ''),
-    jellyfin_user_id=os.getenv('JELLYFIN_USER_ID', '')
-)
 
 # Setup logging to capture all logs
 log_file = os.getenv('LOG_PATH', os.path.join(os.getcwd(), 'logs', 'app.log'))

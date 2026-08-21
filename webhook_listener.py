@@ -15,7 +15,6 @@ from blueprints.webhooks_routes import safe_datetime_sort, cleanup_config_rules,
 # views on the shared Blueprint (shared.bp) before it gets attached to the
 # app below.
 from blueprints import (
-    jellyfin_routes,
     media_images,
     plex_routes,
     tmdb_routes,
@@ -47,7 +46,6 @@ def get_service_status():
     status = {
         'sonarr': check_service_status(shared.SONARR_URL) if shared.SONARR_URL else "Offline",
         'radarr': check_service_status(shared.RADARR_URL) if shared.RADARR_URL else "Offline",
-        'jellyfin': check_service_status(shared.jellyfin_api.jellyfin_url) if shared.jellyfin_api.jellyfin_url else "Offline",
     }
     if shared.JELLYSEERR_URL:
         status['jellyseerr'] = check_service_status(shared.JELLYSEERR_URL)
