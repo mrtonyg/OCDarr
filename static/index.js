@@ -211,17 +211,22 @@ function showMainTab(tabId) {
     // Save the current tab to localStorage
     localStorage.setItem('lastActiveTab', tabId);
     
-    // If we're showing the settings tab, restore the last view
+    // If we're showing the settings tab, restore the last view and load rule data
     if (tabId === 'settings-tab') {
         const lastView = localStorage.getItem('lastSettingsView') || 'main-settings';
         toggleSettingsView(lastView);
+
+        const ruleNameSelect = document.getElementById('rule_name');
+        if (ruleNameSelect) {
+            loadRule();
+        }
     }
-    
+
     // Dispatch custom event for sidebar to update active state
-    window.dispatchEvent(new CustomEvent('tabChanged', { 
+    window.dispatchEvent(new CustomEvent('tabChanged', {
         detail: { tabId: tabId }
     }));
-    
+
     // On mobile, auto-close the sidebar after selection
     const sidebar = document.getElementById('sidebar');
     if (window.innerWidth <= 768 && sidebar && sidebar.classList.contains('expanded')) {
@@ -259,100 +264,25 @@ function checkForNewRequests() {
         })
         .catch(error => console.error('Error checking for requests:', error));
 }
-function showMainTab(tabId) {
-    // Hide all tabs
-    document.querySelectorAll('.main-tab').forEach(tab => {
-        tab.style.display = 'none';
-    });
-    
-    // Show selected tab
-    const selectedTab = document.getElementById(tabId);
-    if (selectedTab) {
-        selectedTab.style.display = 'block';
-    } else {
-        console.error("Tab not found:", tabId);
-        // Fallback to shows tab
-        const showsTab = document.getElementById('shows-tab');
-        if (showsTab) showsTab.style.display = 'block';
-    }
-    
-    // Save the current tab to localStorage
-    localStorage.setItem('lastActiveTab', tabId);
-    
-    // If we're showing the settings tab, load the rule data
-    if (tabId === 'settings-tab') {
-        const ruleNameSelect = document.getElementById('rule_name');
-        if (ruleNameSelect) {
-            loadRule();
-        }
-    }
-    
-    // Dispatch custom event for sidebar to update active state
-    window.dispatchEvent(new CustomEvent('tabChanged', { 
-        detail: { tabId: tabId }
-    }));
-    
-    // On mobile, auto-close the sidebar after selection
-    const sidebar = document.getElementById('sidebar');
-    if (window.innerWidth <= 768 && sidebar && sidebar.classList.contains('expanded')) {
-        sidebar.classList.remove('expanded');
-    }
-}
 
 
 function loadRule() {
-    console.log("Attempting to load rule - START");
-    
-    // Exhaustive debugging
-    console.log("Document readyState:", document.readyState);
-    
-    // Log all script tags
-    const scriptTags = document.getElementsByTagName('script');
-    console.log("Script tags:", Array.from(scriptTags).map(s => s.id || s.src));
-    
-    // Log config data element details
-    const configDataElement = document.getElementById('config-data');
-    if (configDataElement) {
-        console.log("Config data element found");
-        console.log("Config data content length:", configDataElement.textContent.length);
-        try {
-            const config = JSON.parse(configDataElement.textContent);
-            console.log("Successfully parsed config", config);
-        } catch (parseError) {
-            console.error("Error parsing config:", parseError);
-        }
-    } else {
-        console.warn("No config-data element found");
-        
-        // Additional DOM investigation
-        const allElements = document.getElementsByTagName('*');
-        console.log("Total elements in document:", allElements.length);
-        console.log("Elements with script type:", 
-            Array.from(document.querySelectorAll('script[type="application/json"]'))
-                .map(el => el.id)
-        );
-    }
-    
     const ruleSelect = document.getElementById('rule_name');
     if (!ruleSelect) {
-        console.warn("Rule select element not found");
         return;
     }
-    
+
     const configElement = document.getElementById('config-data');
     if (!configElement) {
         console.warn("Config data element not found");
         return;
     }
-    
+
     try {
         const config = JSON.parse(configElement.textContent);
         const ruleName = ruleSelect.value;
         const rule = config.rules[ruleName];
-        
-        console.log("Current rule:", ruleName);
-        console.log("Rule details:", rule);
-        
+
         // Null-safe element access and setting
         const getOptionEl = document.getElementById('get_option');
         const actionOptionEl = document.getElementById('action_option');
@@ -369,30 +299,39 @@ function loadRule() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("DOMContentLoaded event triggered");
-    
     const ruleSelect = document.getElementById('rule_name');
-    
+
     if (ruleSelect) {
-        console.log("Rule select found, adding event listener");
         ruleSelect.addEventListener('change', loadRule);
-        
+
         // Initial load
         loadRule();
-    } else {
-        console.warn("Rule select not found during DOMContentLoaded");
     }
 });
 
-// Fallback method
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log("Fallback DOMContentLoaded triggered");
+// Validate get_option/keep_watched before letting the rule form submit -
+// they only accept 'season', 'all', or a whole number.
+document.addEventListener('DOMContentLoaded', function() {
+    const settingsForm = document.getElementById('settings-form');
+    if (!settingsForm) return;
+
+    const validPattern = /^(season|all|\d+)$/i;
+
+    settingsForm.addEventListener('submit', function(e) {
+        const getOption = document.getElementById('get_option');
+        const keepWatched = document.getElementById('keep_watched');
+
+        for (const field of [getOption, keepWatched]) {
+            if (field && !validPattern.test(field.value.trim())) {
+                e.preventDefault();
+                alert(`"${field.value}" isn't valid for "${field.previousElementSibling.textContent}" - enter 'season', 'all', or a whole number.`);
+                field.focus();
+                return;
+            }
+        }
     });
-} else {
-    console.log("Document already loaded, calling loadRule directly");
-    loadRule();
-}
+});
+
 function toggleNewRuleName() {
     const ruleSelect = document.getElementById('rule_name');
     const newRuleNameGroup = document.getElementById('new_rule_name_group');
@@ -430,40 +369,6 @@ function toggleNewRuleName() {
         loadRule();
     }
 }
-
-// Ensure DOM is fully loaded before adding event listeners
-document.addEventListener('DOMContentLoaded', function() {
-    const ruleSelect = document.getElementById('rule_name');
-    
-    if (ruleSelect) {
-        ruleSelect.addEventListener('change', loadRule);
-        
-        // Initial load
-        loadRule();
-    }
-});
-
-function toggleNewRuleName() {
-    const ruleSelect = document.getElementById('rule_name');
-    const newRuleNameGroup = document.getElementById('new_rule_name_group');
-    
-    if (ruleSelect.value === 'add_new') {
-        newRuleNameGroup.style.display = 'block';
-        
-        // Reset form fields to default/empty values when creating a new rule
-        document.getElementById('get_option').value = '';
-        document.getElementById('action_option').value = 'monitor';
-        document.getElementById('keep_watched').value = '';
-        document.getElementById('monitor_watched').value = 'false';
-    } else {
-        newRuleNameGroup.style.display = 'none';
-        
-        // Load the rule values when a rule is selected
-        loadRule(ruleSelect.value);
-    }
-}
-
-
 
 function confirmDeleteRule() {
     const ruleSelect = document.getElementById('rule_name');
