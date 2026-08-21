@@ -2,6 +2,7 @@ import os
 import requests
 import logging
 import json
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -10,6 +11,12 @@ load_dotenv()
 # Define log paths
 LOG_PATH = os.getenv('LOG_PATH', '/app/logs/app.log')
 MISSING_LOG_PATH = os.getenv('MISSING_LOG_PATH', '/app/logs/missing.log')
+# Human-readable record of fill-ahead actions, read back by the Dashboard's
+# "Recently Filled" panel - shared.py reads the same file (see its
+# ACTION_LOG_FILE constant); this script runs as its own subprocess so it
+# can't import shared.py's module state directly, only agree on the path.
+ACTION_LOG_PATH = os.getenv('ACTION_LOG_PATH', '/app/data/action_log.json')
+MAX_ACTION_LOG_ENTRIES = 50
 
 # Configure logging
 logging.basicConfig(
@@ -251,7 +258,30 @@ def fetch_all_episodes(series_id):
     logger.error("Failed to fetch all episodes.")
     return []
 
-def process_episodes_based_on_rules(series_id, season_number, episode_number, rule):
+def append_action_log(series_name, season_number, episode_number, fetched_count, action_option):
+    """Record a fill-ahead action for the Dashboard's "Recently Filled" panel."""
+    try:
+        entries = []
+        if os.path.exists(ACTION_LOG_PATH):
+            with open(ACTION_LOG_PATH, 'r') as f:
+                entries = json.load(f)
+
+        entries.append({
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'series': series_name,
+            'watched': f"S{season_number}E{episode_number}",
+            'fetched_count': fetched_count,
+            'action': action_option
+        })
+        entries = entries[-MAX_ACTION_LOG_ENTRIES:]
+
+        os.makedirs(os.path.dirname(ACTION_LOG_PATH), exist_ok=True)
+        with open(ACTION_LOG_PATH, 'w') as f:
+            json.dump(entries, f)
+    except Exception as e:
+        logger.error(f"Failed to write action log: {str(e)}")
+
+def process_episodes_based_on_rules(series_id, season_number, episode_number, rule, series_name=None):
     """
     Fill ahead: fetch/monitor the next episodes per the rule's get_option,
     across season boundaries if needed. This always runs.
@@ -264,6 +294,9 @@ def process_episodes_based_on_rules(series_id, season_number, episode_number, ru
     """
     next_episode_ids = fetch_next_episodes(series_id, season_number, episode_number, rule['get_option'])
     monitor_or_search_episodes(next_episode_ids, rule['action_option'])
+
+    if next_episode_ids:
+        append_action_log(series_name or f"series {series_id}", season_number, episode_number, len(next_episode_ids), rule['action_option'])
 
     keep_watched = rule.get('keep_watched')
     monitor_watched = rule.get('monitor_watched')
@@ -341,7 +374,7 @@ def main():
             rule = next((details for key, details in config['rules'].items() if str(series_id) in details.get('series', [])), None)
             if rule:
                 logger.info(f"Applying rule: {rule}")
-                process_episodes_based_on_rules(series_id, season_number, episode_number, rule)
+                process_episodes_based_on_rules(series_id, season_number, episode_number, rule, series_name=series_name)
             else:
                 logger.info(f"No rule found for series ID {series_id}. Skipping operations.")
         else:

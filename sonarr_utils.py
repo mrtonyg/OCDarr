@@ -1,7 +1,6 @@
 import os
 import requests
 import random
-from datetime import datetime
 from dotenv import load_dotenv
 from PIL import Image, ImageFilter
 import io
@@ -84,76 +83,3 @@ def get_series_list(preferences):
     else:
         return []
 
-def fetch_episode_file_details(episode_file_id):
-    episode_file_url = f"{SONARR_URL}/api/v3/episodefile/{episode_file_id}"
-    headers = {'X-Api-Key': SONARR_API_KEY}
-    response = requests.get(episode_file_url, headers=headers)
-    return response.json() if response.ok else None
-
-def fetch_series_and_episodes(preferences, series_list=None):
-    """
-    series_list can be passed in (e.g. already fetched via get_series_list())
-    to avoid re-fetching Sonarr's full series list - the / dashboard route
-    used to call this, fetch_upcoming_premieres(), and get_series_list()
-    each independently, fetching the same data 3 times per page load.
-    """
-    SONARR_URL = preferences['SONARR_URL']
-    SONARR_API_KEY = preferences['SONARR_API_KEY']
-
-    headers = {'X-Api-Key': SONARR_API_KEY}
-    active_series = []
-
-    if series_list is None:
-        series_response = requests.get(f"{SONARR_URL}/api/v3/series", headers=headers)
-        series_list = series_response.json() if series_response.ok else []
-
-    for series in series_list:
-        episodes_url = f"{SONARR_URL}/api/v3/episode"
-        params = {'seriesId': series['id']}
-        episodes_response = requests.get(episodes_url, headers=headers, params=params)
-        episodes = episodes_response.json() if episodes_response.ok else []
-
-        for episode in episodes:
-            if episode.get('monitored') and episode.get('hasFile'):
-                episode_file_details = fetch_episode_file_details(episode['episodeFileId'])
-                if episode_file_details and 'dateAdded' in episode_file_details:
-                    date_added = datetime.fromisoformat(episode_file_details['dateAdded'].replace('Z', '+00:00'))
-                    active_series.append({
-                        'name': series['title'],
-                        'latest_monitored_episode': f"S{episode['seasonNumber']}E{episode['episodeNumber']} - {episode['title']}",
-                        'artwork_url': f"/api/sonarr/image/{series['id']}/poster.jpg",
-                        'sonarr_series_url': f"{SONARR_PUBLIC_URL}/series/{series['titleSlug']}",
-                        'dateAdded': date_added,
-                        'tag_id': 2 if 2 in series.get('tags', []) else None  # Check if tag_id 2 is in the tags list
-                    })
-                    break
-
-    active_series.sort(key=lambda series: series['dateAdded'], reverse=True)
-    return active_series[:MAX_SHOWS_ITEMS]
-
-def fetch_upcoming_premieres(preferences, series_list=None):
-    """series_list can be passed in to avoid re-fetching - see fetch_series_and_episodes()."""
-    SONARR_URL = preferences['SONARR_URL']
-    SONARR_API_KEY = preferences['SONARR_API_KEY']
-
-    headers = {'X-Api-Key': SONARR_API_KEY}
-    upcoming_premieres = []
-
-    if series_list is None:
-        series_response = requests.get(f"{SONARR_URL}/api/v3/series", headers=headers)
-        series_list = series_response.json() if series_response.ok else []
-
-    if series_list:
-        for series in series_list:
-            if 'nextAiring' in series:
-                next_airing_dt = datetime.fromisoformat(series['nextAiring'].replace('Z', '+00:00'))
-                formatted_date = next_airing_dt.strftime('%Y-%m-%d at %H:%M')
-                upcoming_premieres.append({
-                    'name': series['title'],
-                    'nextAiring': formatted_date,
-                    'artwork_url': f"/api/sonarr/image/{series['id']}/poster.jpg",
-                    'sonarr_series_url': f"{SONARR_PUBLIC_URL}/series/{series['titleSlug']}"
-                })
-
-    upcoming_premieres.sort(key=lambda x: x['nextAiring'])
-    return upcoming_premieres

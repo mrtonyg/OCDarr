@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='plex-watchlist.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <title>OCDarr</title>
 
@@ -265,18 +264,12 @@
         </div>
     
     <nav class="sidebar-nav">
-             
-        <!-- Shows Section (simplified to a single item) -->
-        <a href="#" class="nav-item" onclick="showMainTab('shows-tab')" data-section="shows">
-            <span class="nav-icon"><i class="fas fa-tv"></i></span>
-            <span class="nav-text">Shows</span>
+
+        <a href="#" class="nav-item" onclick="showMainTab('dashboard-tab')" data-section="dashboard">
+            <span class="nav-icon"><i class="fas fa-tachometer-alt"></i></span>
+            <span class="nav-text">Dashboard</span>
         </a>
 
-        <!-- Movies Section (simplified to a single item) -->
-        <a href="#" class="nav-item" onclick="showMainTab('movies-tab')" data-section="movies">
-            <span class="nav-icon"><i class="fas fa-film"></i></span>
-            <span class="nav-text">Movies</span>
-        </a>
         <a href="#" class="nav-item" onclick="showMainTab('requests-tab')" data-section="requests">
             <span class="nav-icon"><i class="fas fa-download"></i></span>
             <span class="nav-text">Requests</span>
@@ -284,14 +277,7 @@
             <span class="notification-badge">{{ pending_requests|length }}</span>
             {% endif %}
         </a>
-        
-        <!-- Server Dashboard Section -->
-        <a href="#" class="nav-item" onclick="showMainTab('plex-tab')" data-section="plex">
-            <span class="nav-icon"><i class="fas fa-play-circle"></i></span>
-            <span class="nav-text">Servers</span>
-        </a>
-        
-        
+
         <!-- Settings Section - now a single menu item without submenu -->
         <a href="#" class="nav-item" onclick="showMainTab('settings-tab')" data-section="settings">
             <span class="nav-icon"><i class="fas fa-cog"></i></span>
@@ -300,8 +286,6 @@
 </nav>
     </nav>
 </div>
-   <input type="hidden" id="jellyseerr-url" value="{{ jellyseerr_url }}">
-
 <!-- The main content container -->
 <div class="content-wrapper" id="content-wrapper">
     
@@ -317,194 +301,26 @@
                     </div>
                 </div>
             </div>
+            <div class="content-row">
+                <div class="card bg-dark">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-3">Recently Filled</h6>
+                        {% if recent_actions %}
+                        <ul class="list-unstyled mb-0" style="font-family: monospace; font-size: 0.85em;">
+                            {% for line in recent_actions %}
+                            <li class="mb-1">{{ line }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <p class="text-muted mb-0">Nothing filled ahead yet.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
         </section>
         <!-- Shows Tab -->
-        <section id="shows-tab" class="main-tab">
-            <!-- Recently Added Shows -->
-            <div class="content-row">
-                <header class="row-header">
-                    <h4>Recently Added</h4>
-                    <div class="row-controls">
-                        <button class="scroll-btn scroll-start" onclick="scrollRowToStart(this)">⏮️</button>
-                        <button class="scroll-btn scroll-left" onclick="scrollRowLeft(this)">←</button>
-                        <button class="scroll-btn scroll-right" onclick="scrollRowRight(this)">→</button>
-                    </div>
-                </header>
-                <div class="scrollable-row">
-                    {% for item in current_series %}
-                    {% if item.type == 'tv' %}
-                    <article class="media-item">
-                        <div class="poster-wrapper">
-                            <a href="{{ item.sonarr_series_url }}">
-                                <img src="{{ item.artwork_url }}" alt="{{ item.name }}" class="poster">
-                                <div class="media-info">
-                                    <p class="media-subtitle">{{ item.latest_monitored_episode }}</p>
-                                </div>
-                            </a>
-                        </div>
-                    </article>
-                    {% endif %}
-                    {% endfor %}
-                </div>
-            </div>
-
-            <!-- Upcoming Shows -->
-            <div class="content-row">
-                <header class="row-header">
-                    <h4>Upcoming</h4> <!-- Fixed duplicate -->
-                    <div class="row-controls">
-                        <button class="scroll-btn scroll-start" onclick="scrollRowToStart(this)">⏮️</button>
-                        <button class="scroll-btn scroll-left" onclick="scrollRowLeft(this)">←</button>
-                        <button class="scroll-btn scroll-right" onclick="scrollRowRight(this)">→</button>
-                    </div>
-                </header>
-                <div class="scrollable-row">
-                    {% for item in upcoming_premieres %}
-                    {% if item.type == 'tv' %}
-                    <article class="media-item">
-                        <div class="poster-wrapper">
-                            <a href="{{ item.sonarr_series_url }}">
-                                <img src="{{ item.artwork_url }}" alt="{{ item.name }}" class="poster">
-                                <div class="media-info">
-                                    <p class="media-subtitle">{{ item.nextAiring.split(' at ')[0] }}</p>
-                                </div>
-                            </a>
-                        </div>
-                    </article>
-                    {% endif %}
-                    {% endfor %}
-                </div>
-            </div>
-
-            <!-- Popular Shows (Jellyseerr) -->
-            <div class="content-row">
-                <header class="row-header">
-                    <h4>Popular Shows</h4>
-                    <div class="row-controls">
-                        <button class="scroll-btn scroll-start" onclick="scrollRowToStart(this)">⏮️</button>
-                        <button class="scroll-btn scroll-left" onclick="scrollRowLeft(this)">←</button>
-                        <button class="scroll-btn scroll-right" onclick="scrollRowRight(this)">→</button>
-                    </div>
-                </header>
-                <div class="scrollable-row" id="popular-shows-row">
-                    <div class="loading-indicator">Loading popular shows...</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Movies Tab -->
-        <section id="movies-tab" class="main-tab" style="display: none;">
-            <!-- Recently Added Movies -->
-            <div class="content-row">
-                <header class="row-header">
-                    <h4>Recently Added</h4>
-                    <div class="row-controls">
-                        <button class="scroll-btn scroll-start" onclick="scrollRowToStart(this)">⏮️</button>
-                        <button class="scroll-btn scroll-left" onclick="scrollRowLeft(this)">←</button>
-                        <button class="scroll-btn scroll-right" onclick="scrollRowRight(this)">→</button>
-                    </div>
-                </header>
-                <div class="scrollable-row">
-                    {% for item in current_series %}
-                    {% if item.type == 'movie' %}
-                    <article class="media-item">
-                        <div class="poster-wrapper">
-                            <a href="{{ item.radarr_movie_url }}">
-                                <img src="{{ item.artwork_url }}" alt="{{ item.name }}" class="poster">
-                                <div class="media-info">
-                                    <p class="media-subtitle">{{ item.year }}</p>
-                                </div>
-                            </a>
-                        </div>
-                    </article>
-                    {% endif %}
-                    {% endfor %}
-                </div>
-            </div>
-
-            <!-- Upcoming Movies -->
-            <div class="content-row">
-                <header class="row-header">
-                    <h4>Missing</h4>
-                    <div class="row-controls">
-                        <button class="scroll-btn scroll-start" onclick="scrollRowToStart(this)">⏮️</button>
-                        <button class="scroll-btn scroll-left" onclick="scrollRowLeft(this)">←</button>
-                        <button class="scroll-btn scroll-right" onclick="scrollRowRight(this)">→</button>
-                    </div>
-                </header>
-                <div class="scrollable-row">
-                    {% for item in upcoming_premieres %}
-                    {% if item.type == 'movie' %}
-                    <article class="media-item">
-                        <div class="poster-wrapper">
-                            <a href="{{ item.radarr_movie_url }}">
-                                <img src="{{ item.artwork_url }}" alt="{{ item.name }}" class="poster">
-                                <div class="media-info">
-                                    <p class="media-subtitle">{{ item.releaseDate }}</p>
-                                </div>
-                            </a>
-                        </div>
-                    </article>
-                    {% endif %}
-                    {% endfor %}
-                </div>
-            </div>
-
-            <!-- Popular Movies (Jellyseerr) -->
-            <div class="content-row">
-                <header class="row-header">
-                    <h4>Popular Movies</h4>
-                    <div class="row-controls">
-                        <button class="scroll-btn scroll-start" onclick="scrollRowToStart(this)">⏮️</button>
-                        <button class="scroll-btn scroll-left" onclick="scrollRowLeft(this)">←</button>
-                        <button class="scroll-btn scroll-right" onclick="scrollRowRight(this)">→</button>
-                    </div>
-                </header>
-                <div class="scrollable-row" id="popular-movies-row">
-                    <div class="loading-indicator">Loading popular movies...</div>
-                </div>
-            </div>
-        </section>
-
         <section id="requests-tab" class="main-tab" style="display: none;">
             <h4>Requests</h4>
-            <!-- Direct Request Form -->
-            <div class="card mb-4">
-                <div class="card-header bg-dark">
-                    <h5 class="mb-0 text-light">Direct Request</h5>
-                </div>
-                <div class="card-body bg-dark text-light">
-                    <form id="direct-request-form" method="POST" action="{{ url_for('process_direct_request') }}">
-                        <div class="form-group">
-                            <label for="request_input">Enter your request:</label>
-                            <input type="text" id="request_input" name="request_input" class="form-control" 
-                                placeholder="Show Name, or Movie Title" required>
-                            <small class="form-text text-muted">
-                                Examples: "Breaking Bad" </small>
-                        </div>
-                        <div class="form-group">
-                            <label>Media Type:</label>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="media_type" id="type_auto" value="auto" checked>
-                                <label class="form-check-label" for="type_auto">Auto-detect</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="media_type" id="type_tv" value="tv">
-                                <label class="form-check-label" for="type_tv">TV Show</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="media_type" id="type_movie" value="movie">
-                                <label class="form-check-label" for="type_movie">Movie</label>
-                            </div>
-                        </div>
-                        
-                        <div class="d-flex justify-content-between">
-                            <button type="submit" class="btn btn-primary">Submit Request</button>
-                            <button type="button" id="open-jellyseerr" class="btn btn-secondary">Open Jellyseerr</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
 
             <!-- Pending Requests Section -->
             <h5 class="mb-3">Pending Requests</h5>
@@ -592,12 +408,6 @@
                                 </div>
                                 <div class="card-body bg-dark text-light">
                                     <p>Processing episodes for {{ last_processed_show.title }} - Season {{ last_processed_show.season }}</p>
-                                    <div class="banner-wrapper mb-3">
-                                        <img src="/api/sonarr/image/series/{{ last_processed_show.series_id }}/banner.jpg"
-                                            alt="Banner for {{ last_processed_show.title }}" 
-                                            class="img-fluid banner"
-                                            onerror="this.onerror=null; this.src='{{ url_for('static', filename='placeholder-banner.png') }}';">
-                                    </div>
                                     <p class="processing-time">Started {{ last_processed_show.time_ago }}</p>
                                 </div>
                             </div>
@@ -606,10 +416,6 @@
                 {% endif %}
             </div>
         </section>
-        <section id="plex-tab" class="main-tab" style="display: none;">
-            {% include 'plex-watchlist.html' %}
-        </section>
-
             <!-- Settings Tab -->
 <section id="settings-tab" class="main-tab" style="display: none;">
     
@@ -760,36 +566,7 @@
         </div>
     </div>
 </section>
-    
-</div>
 
-<!-- Details Modal -->
-<div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content bg-dark text-light">
-            <div class="modal-header">
-                <h5 class="modal-title" id="detailsModalLabel">Media Details</h5>
-                <button type="button" class="close text-light" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">×</span>
-                </button>
-            </div>
-            <div class="modal-body" id="detailsModalBody">
-                <div class="row">
-                    <div class="col-5">
-                        <img id="detailsPoster" src="" alt="Poster" class="img-fluid rounded">
-                    </div>
-                    <div class="col-7">
-                        <h5 id="detailsTitle"></h5>
-                        <p id="detailsYear" class="text-muted"></p>
-                        <p id="detailsOverview" class="small"></p>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer" id="detailsModalFooter">
-                <!-- Buttons will be added dynamically based on content type -->
-            </div>
-        </div>
-    </div>
 </div>
 </div>
 
@@ -843,7 +620,6 @@
 
 <!-- Load your custom scripts -->
 <script src="{{ url_for('static', filename='index.js') }}"></script>
-<script src="{{ url_for('static', filename='plex-watchlist.js') }}"></script>
 <!-- Auto refresh functionality -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -963,7 +739,7 @@
         }
         
         // Initialize with the current active tab
-        const lastActiveTab = localStorage.getItem('lastActiveTab') || 'shows-tab';
+        const lastActiveTab = localStorage.getItem('lastActiveTab') || 'dashboard-tab';
         setActiveMenu(lastActiveTab);
         
         // Update active menu when tab changes
@@ -1010,47 +786,9 @@
         
         // Handle window resize
         window.addEventListener('resize', handleResponsive);
-        
+
         // Initial setup
         handleResponsive();
-        
-        // Custom event for tab changes
-        window.showMainTab = function(tabId) {
-            // Hide all tabs
-            document.querySelectorAll('.main-tab').forEach(tab => {
-                tab.style.display = 'none';
-            });
-            
-            // Show selected tab
-            const selectedTab = document.getElementById(tabId);
-            if (selectedTab) {
-                selectedTab.style.display = 'block';
-            } else {
-                console.error("Tab not found:", tabId);
-                // Fallback to shows tab
-                const showsTab = document.getElementById('shows-tab');
-                if (showsTab) showsTab.style.display = 'block';
-            }
-            
-            // Save the current tab to localStorage
-            localStorage.setItem('lastActiveTab', tabId);
-            
-            // Special handling for settings
-            if (tabId === 'settings-tab') {
-                const lastSubsection = localStorage.getItem('lastSettingsSubsection') || 'rule_management';
-                showSettingsSection(lastSubsection);
-            }
-            
-            // Dispatch custom event for sidebar to update active state
-            window.dispatchEvent(new CustomEvent('tabChanged', { 
-                detail: { tabId: tabId }
-            }));
-            
-            // On mobile, auto-close the sidebar after selection
-            if (window.innerWidth <= 768 && sidebar.classList.contains('expanded')) {
-                sidebar.classList.remove('expanded');
-            }
-        };
     });
     </script>
      <script type="application/json" id="config-data">

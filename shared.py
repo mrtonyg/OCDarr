@@ -53,6 +53,12 @@ os.makedirs(os.path.dirname(LAST_PROCESSED_FILE), exist_ok=True)
 LAST_WEBHOOK_FILE = os.path.join(os.getcwd(), 'data', 'last_webhook.json')
 os.makedirs(os.path.dirname(LAST_WEBHOOK_FILE), exist_ok=True)
 
+# Written by servertosonarr.py (a separate subprocess, hence the matching
+# path convention rather than a shared import) every time it actually fills
+# ahead - read here for the Dashboard's "Recently Filled" panel.
+ACTION_LOG_FILE = os.path.join(os.getcwd(), 'data', 'action_log.json')
+os.makedirs(os.path.dirname(ACTION_LOG_FILE), exist_ok=True)
+
 # Initialize the Jellyseerr API client
 jellyseerr_api = JellyseerrAPI()
 

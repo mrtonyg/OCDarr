@@ -9,14 +9,13 @@ import modified_episeerr
 
 import shared
 from shared import app
-from blueprints.webhooks_routes import safe_datetime_sort, cleanup_config_rules, cleanup_invalid_requests
+from blueprints.webhooks_routes import cleanup_config_rules, cleanup_invalid_requests
 
 # Import each route module so its @bp.route(...) decorators register their
 # views on the shared Blueprint (shared.bp) before it gets attached to the
 # app below.
 from blueprints import (
     media_images,
-    plex_routes,
     tmdb_routes,
     requests_routes,
     webhooks_routes,
@@ -68,51 +67,13 @@ def health():
 def home():
     config = shared.load_config()
 
-    # Load Sonarr data. get_series_list() is fetched once here and reused
-    # by the other two calls - they used to each independently re-fetch
-    # Sonarr's full series list, meaning the same data was fetched 3 times
-    # on every dashboard load.
+    # Needed for Settings > Assign Rules (the checkbox list of every
+    # series). Not used for any "recently added" browsing anymore - OCDarr
+    # doesn't duplicate library views Plex/Sonarr/Radarr already show.
     sonarr_preferences = sonarr_utils.load_preferences()
     all_series = sonarr_utils.get_series_list(sonarr_preferences)
-    current_series = sonarr_utils.fetch_series_and_episodes(sonarr_preferences, series_list=all_series)
-    upcoming_premieres = sonarr_utils.fetch_upcoming_premieres(sonarr_preferences, series_list=all_series)
 
-    # Load Radarr data. Same dedup: get_movie_list() fetched once, reused by
-    # both calls below (previously fetched independently, twice).
     radarr_preferences = radarr_utils.load_preferences()
-    all_movies = radarr_utils.get_movie_list(radarr_preferences)
-    recent_movies = radarr_utils.fetch_recent_movies(radarr_preferences, movies=all_movies)
-    upcoming_movies = radarr_utils.fetch_upcoming_movies(radarr_preferences, movies=all_movies)
-
-    # Add type to TV shows for consistent handling
-    for series in current_series:
-        series['type'] = 'tv'
-
-    # Combine and sort watching items by date added
-    combined_watching = current_series + recent_movies
-    combined_watching.sort(key=safe_datetime_sort, reverse=True) # Limit to reasonable number
-    combined_watching = combined_watching[:shared.MAX_COMBINED_ITEMS]
-
-    # Add type to TV premieres for consistent handling
-    for premiere in upcoming_premieres:
-        premiere['type'] = 'tv'
-
-    # Combine upcoming premieres and sort by date
-    # In the home route of webhook_listener.py:
-
-    # Make sure this logic works properly:
-    combined_upcoming = upcoming_premieres + upcoming_movies
-
-    # Ensure consistent date field for sorting
-    for item in combined_upcoming:
-        if 'nextAiring' not in item and 'releaseDate' in item:
-            item['nextAiring'] = item['releaseDate']
-
-    # Sort by nextAiring - make sure we handle empty strings properly
-    combined_upcoming.sort(key=lambda x: x.get('nextAiring', '') or '')
-
-    # Limit to reasonable number
-    combined_upcoming = combined_upcoming[:shared.MAX_COMBINED_ITEMS]
 
     # Get pending requests
     pending_requests = []
@@ -169,6 +130,25 @@ def home():
     except Exception as e:
         app.logger.error(f"Error loading last webhook info: {str(e)}")
 
+    # "Recently Filled" - plain-text log of what OCDarr itself has done
+    # (fill-ahead actions), most recent first. Not a library browser -
+    # Plex/Sonarr/Radarr already show what's in the library.
+    recent_actions = []
+    try:
+        if os.path.exists(shared.ACTION_LOG_FILE):
+            with open(shared.ACTION_LOG_FILE, 'r') as f:
+                entries = json.load(f)
+            for entry in reversed(entries):
+                entry_time = datetime.fromisoformat(entry['timestamp'])
+                count = entry.get('fetched_count', 0)
+                recent_actions.append(
+                    f"{entry_time.strftime('%Y-%m-%d %H:%M UTC')} — {entry.get('series', 'Unknown')}: "
+                    f"watched {entry.get('watched', '?')}, fetched {count} episode{'s' if count != 1 else ''} "
+                    f"({entry.get('action', 'monitor')})"
+                )
+    except Exception as e:
+        app.logger.error(f"Error loading action log: {str(e)}")
+
     # Map series to rules
     rules_mapping = {str(series_id): rule_name for rule_name, details in config['rules'].items() for series_id in details.get('series', [])}
 
@@ -208,13 +188,12 @@ def home():
 
     return render_template('index.html',
                         config=config,
-                        current_series=combined_watching,
-                        upcoming_premieres=combined_upcoming,
                         all_series=all_series,
                         sonarr_url=shared.SONARR_PUBLIC_URL,
                         radarr_url=shared.RADARR_URL,
                         jellyseerr_url=shared.JELLYSEERR_URL,
                         connection_urls=connection_urls,
+                        recent_actions=recent_actions,
                         rule=request.args.get('rule', 'full_seasons'),
                         pending_requests=pending_requests,
                         has_pending_requests=has_pending_requests,
