@@ -28,24 +28,31 @@ from blueprints import (
 app.register_blueprint(shared.bp, name='')
 
 
-def check_service_status(url):
+def check_service_status(url, headers=None):
     try:
-        # Add a longer timeout and use a HEAD request which is lighter
-        response = requests.head(url, timeout=3, allow_redirects=True)
-
-        # Check for successful status codes
-        if response.status_code in [200, 301, 302, 303, 307, 308]:
-            return "Online"
+        response = requests.get(url, headers=headers or {}, timeout=5)
+        return "Online" if response.ok else "Offline"
     except requests.exceptions.RequestException:
-        pass
-
-    return "Offline"
+        return "Offline"
 
 def get_service_status():
-    """Check reachability of every integration the dashboard depends on."""
+    """Check reachability of every integration the dashboard depends on.
+
+    Sonarr/Radarr are hit via their authenticated system/status API
+    endpoint (the same X-Api-Key pattern already used everywhere else in
+    this codebase to talk to them), not a bare HEAD request to the root
+    URL — a plain unauthenticated HEAD against their web UI root was
+    unreliable (redirects/auth behavior on the SPA root differs from the
+    REST API) and reported "Offline" even when both services were
+    confirmed reachable and actively serving real data to the dashboard.
+    """
     status = {
-        'sonarr': check_service_status(shared.SONARR_URL) if shared.SONARR_URL else "Offline",
-        'radarr': check_service_status(shared.RADARR_URL) if shared.RADARR_URL else "Offline",
+        'sonarr': check_service_status(
+            f"{shared.SONARR_URL}/api/v3/system/status", {'X-Api-Key': shared.SONARR_API_KEY}
+        ) if shared.SONARR_URL else "Offline",
+        'radarr': check_service_status(
+            f"{shared.RADARR_URL}/api/v3/system/status", {'X-Api-Key': shared.RADARR_API_KEY}
+        ) if shared.RADARR_URL else "Offline",
     }
     if shared.JELLYSEERR_URL:
         status['jellyseerr'] = check_service_status(shared.JELLYSEERR_URL)
