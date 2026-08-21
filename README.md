@@ -243,27 +243,7 @@ services:
       - "5002:5002"
     restart: unless-stopped
 ```
-# OcDarr for Unraid
-
 Flask application that provides integrated webhook functionality for Sonarr, Radarr, Jellyseerr, and Plex.
-
-## For Unraid Users
-
-To install this Docker container on Unraid:
-
-1. Navigate to the "Docker" tab in your Unraid web UI
-2. Click on the "Docker Repositories" sub-tab
-3. Add `https://github.com/vansmak/OCDarr` to your template repositories
-4. Click "Save"
-5. Go back to the "Docker" tab
-6. Click "Add Container"
-7. Find "OcDarr" in the template dropdown
-8. Configure the container settings as needed
-9. Click "Apply"
-
-## Architecture Support
-
-This container is designed for AMD64/x86_64 systems only. It will not work on ARM-based Unraid servers.
 
 ## Configuration
 
