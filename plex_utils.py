@@ -154,8 +154,7 @@ class PlexWatchlistAPI:
             # First, try direct TMDB ID lookup
             lookup_url = "https://metadata.provider.plex.tv/library/search"
             params = {
-                'query': f"tmdb://{tmdb_id}",
-                'X-Plex-Token': self.plex_token
+                'query': f"tmdb://{tmdb_id}"
             }
 
             try:
@@ -186,8 +185,7 @@ class PlexWatchlistAPI:
                 
                 if tmdb_details:
                     search_params = {
-                        'query': tmdb_details.get('title', ''),
-                        'X-Plex-Token': self.plex_token
+                        'query': tmdb_details.get('title', '')
                     }
                     
                     generic_response = requests.get(generic_search_url, params=search_params, headers=self.get_headers())

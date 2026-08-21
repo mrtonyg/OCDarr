@@ -91,7 +91,7 @@ def fetch_recent_movies(preferences, limit=None):
                     'name': movie['title'],
                     'year': movie['year'],
                     'type': 'movie',
-                    'artwork_url': f"{RADARR_PUBLIC_URL}/api/v3/mediacover/{movie['id']}/poster-500.jpg?apikey={RADARR_API_KEY}",
+                    'artwork_url': f"/api/radarr/image/{movie['id']}/poster-500.jpg",
                     'radarr_movie_url': f"{RADARR_PUBLIC_URL}/movie/{movie['titleSlug']}",
                     'releaseDate': datetime.fromisoformat(
                         movie.get('movieFile', {}).get('dateAdded', '').replace('Z', '+00:00')
@@ -187,7 +187,7 @@ def fetch_upcoming_movies(preferences):
                         'type': 'movie',
                         'releaseDate': release_date.strftime('%Y-%m-%d'),
                         'releaseType': release_type,
-                        'artwork_url': f"{RADARR_PUBLIC_URL}/api/v3/mediacover/{movie['id']}/poster-500.jpg?apikey={RADARR_API_KEY}",
+                        'artwork_url': f"/api/radarr/image/{movie['id']}/poster-500.jpg",
                         'radarr_movie_url': f"{RADARR_PUBLIC_URL}/movie/{movie['titleSlug']}"
                     })
             

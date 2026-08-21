@@ -15,11 +15,6 @@ function initJellyfinDashboard() {
     loadJellyfinRecentItems();
     loadJellyfinRecommendations();
     loadJellyfinFavorites();
-    
-    // Update ticker if function exists
-    if (typeof updateTicker === 'function') {
-      updateTicker('jellyfin');
-    }
   }
   
   // Add event listeners when the DOM is loaded

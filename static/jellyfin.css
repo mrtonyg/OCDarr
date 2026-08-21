@@ -202,12 +202,6 @@
         margin: 0 5px;
     }
     
-    /* Hide ticker and settings icon on mobile, only show stats */
-    #jellyfin-tab .ticker-container,
-    #jellyfin-tab .ticker-settings {
-        display: none !important;
-    }
-    
     #jellyfin-tab .card-body {
         justify-content: center;
     }

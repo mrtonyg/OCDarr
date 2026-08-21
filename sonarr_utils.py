@@ -46,10 +46,10 @@ def fetch_random_fanart():
             series_list = response.json()
             random_series = random.choice(series_list)
             series_id = random_series['id']
-            fanart_url = f"{SONARR_URL}/api/v3/mediacover/{series_id}/fanart.jpg?apikey={SONARR_API_KEY}"
+            fanart_url = f"{SONARR_URL}/api/v3/mediacover/{series_id}/fanart.jpg"
             logger.info(f"Fetching fanart from: {fanart_url}")
-            
-            fanart_response = requests.get(fanart_url)
+
+            fanart_response = requests.get(fanart_url, headers={'X-Api-Key': SONARR_API_KEY})
             if fanart_response.ok:
                 # Open the image using PIL
                 image = Image.open(io.BytesIO(fanart_response.content))
@@ -115,7 +115,7 @@ def fetch_series_and_episodes(preferences):
                     active_series.append({
                         'name': series['title'],
                         'latest_monitored_episode': f"S{episode['seasonNumber']}E{episode['episodeNumber']} - {episode['title']}",
-                        'artwork_url': f"{SONARR_PUBLIC_URL}/api/v3/mediacover/{series['id']}/poster.jpg?apikey={SONARR_API_KEY}",
+                        'artwork_url': f"/api/sonarr/image/{series['id']}/poster.jpg",
                         'sonarr_series_url': f"{SONARR_PUBLIC_URL}/series/{series['titleSlug']}",
                         'dateAdded': date_added,
                         'tag_id': 2 if 2 in series.get('tags', []) else None  # Check if tag_id 2 is in the tags list
@@ -143,7 +143,7 @@ def fetch_upcoming_premieres(preferences):
                 upcoming_premieres.append({
                     'name': series['title'],
                     'nextAiring': formatted_date,
-                    'artwork_url': f"{SONARR_PUBLIC_URL}/api/v3/mediacover/{series['id']}/poster.jpg?apikey={SONARR_API_KEY}",
+                    'artwork_url': f"/api/sonarr/image/{series['id']}/poster.jpg",
                     'sonarr_series_url': f"{SONARR_PUBLIC_URL}/series/{series['titleSlug']}"
                 })
 

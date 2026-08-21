@@ -432,9 +432,6 @@ function initPlexWatchlist() {
     
     setupPlexSubmenuListeners();
 
-    // Initialize the Plex ticker
-    updateTicker('plex');
-    
     // Initial load of content
     loadWatchlistContent();
     loadRecommendations();
