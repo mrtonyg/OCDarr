@@ -20,15 +20,25 @@ def update_settings():
             return redirect(url_for('home', section='settings', message="New rule name is required."))
 
     get_option = request.form.get('get_option')
-    keep_watched = request.form.get('keep_watched')
+    keep_watched = request.form.get('keep_watched', '').strip()
+    monitor_watched_raw = request.form.get('monitor_watched', '').strip()
 
-    config['rules'][rule_name] = {
+    # keep_watched (deletion) and monitor_watched (auto-unmonitor) are
+    # optional, opt-in per rule - left blank/unset means "don't touch
+    # already-downloaded episodes", which is the default. Only store them
+    # when the user actually chose a value; library cleanup is Maintainerr's
+    # job unless a rule explicitly asks OCDarr to also manage it.
+    new_rule = {
         'get_option': get_option,
         'action_option': request.form.get('action_option'),
-        'keep_watched': keep_watched,
-        'monitor_watched': request.form.get('monitor_watched', 'false').lower() == 'true',
         'series': config['rules'].get(rule_name, {}).get('series', [])
     }
+    if keep_watched:
+        new_rule['keep_watched'] = keep_watched
+    if monitor_watched_raw:
+        new_rule['monitor_watched'] = monitor_watched_raw.lower() == 'true'
+
+    config['rules'][rule_name] = new_rule
 
     shared.save_config(config)
     return redirect(url_for('home', section='settings', message="Settings updated successfully"))

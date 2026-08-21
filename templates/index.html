@@ -705,15 +705,16 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="keep_watched">How many episodes to keep?:</label>
-                        <input type="text" id="keep_watched" name="keep_watched" placeholder="Enter 'season', 'all', or a number" class="form-control" value="">
-                        <small class="form-text text-muted">Must be exactly <code>season</code>, <code>all</code>, or a whole number (e.g. <code>3</code>).</small>
+                        <label for="keep_watched">Delete old episodes? (optional):</label>
+                        <input type="text" id="keep_watched" name="keep_watched" placeholder="Leave blank for no deletion" class="form-control" value="">
+                        <small class="form-text text-muted">Leave blank to opt out (recommended — Maintainerr handles library cleanup). If set, must be exactly <code>season</code>, <code>all</code>, or a whole number (e.g. <code>3</code> keeps the last 3 watched episodes, across season boundaries).</small>
                     </div>
                     <div class="form-group">
-                        <label for="monitor_watched">Keep monitored if watched:</label>
+                        <label for="monitor_watched">Unmonitor episode after watching? (optional):</label>
                         <select id="monitor_watched" name="monitor_watched" class="form-control">
-                            <option value="true">true</option>
-                            <option value="false">false</option>
+                            <option value="">Not managed (recommended)</option>
+                            <option value="true">Keep monitored</option>
+                            <option value="false">Unmonitor after watching</option>
                         </select>
                     </div>
                     <div class="d-flex justify-content-between">

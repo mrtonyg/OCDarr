@@ -252,28 +252,48 @@ def fetch_all_episodes(series_id):
     return []
 
 def process_episodes_based_on_rules(series_id, season_number, episode_number, rule):
-    """Fetch, monitor/search, and delete episodes based on defined rules."""
-    all_episodes = fetch_all_episodes(series_id)
-    last_watched_id = next(ep['id'] for ep in all_episodes if ep['seasonNumber'] == season_number and ep['episodeNumber'] == episode_number)
+    """
+    Fill ahead: fetch/monitor the next episodes per the rule's get_option,
+    across season boundaries if needed. This always runs.
 
-    if not rule['monitor_watched']:
-        unmonitor_episodes([last_watched_id])
-
+    keep_watched (deletion) and monitor_watched (auto-unmonitor after
+    watching) are optional, opt-in per rule - omitted means "don't touch
+    already-downloaded episodes at all". Library cleanup/retention is
+    Maintainerr's job; a rule only reaches into that territory if it
+    explicitly asks to.
+    """
     next_episode_ids = fetch_next_episodes(series_id, season_number, episode_number, rule['get_option'])
     monitor_or_search_episodes(next_episode_ids, rule['action_option'])
 
-    protected_ids = get_protected_episode_ids(all_episodes, rule['keep_watched'], last_watched_id)
-    if protected_ids is not None:
-        # Always protect whatever was just fetched for "next up", even
-        # though it usually won't have a file yet - guards against the
-        # rare case where it's already downloaded (e.g. a fast/cached
-        # grab) and would otherwise fall outside the keep window.
-        protected_ids |= set(next_episode_ids) | {last_watched_id}
-        episodes_to_delete = [
-            ep['episodeFileId'] for ep in all_episodes
-            if ep['hasFile'] and ep['id'] not in protected_ids and 'episodeFileId' in ep
-        ]
-        delete_episodes_in_sonarr(episodes_to_delete)
+    keep_watched = rule.get('keep_watched')
+    monitor_watched = rule.get('monitor_watched')
+    if not keep_watched and monitor_watched is None:
+        return
+
+    all_episodes = fetch_all_episodes(series_id)
+    last_watched_id = next(
+        (ep['id'] for ep in all_episodes if ep['seasonNumber'] == season_number and ep['episodeNumber'] == episode_number),
+        None
+    )
+    if last_watched_id is None:
+        return
+
+    if monitor_watched is False:
+        unmonitor_episodes([last_watched_id])
+
+    if keep_watched:
+        protected_ids = get_protected_episode_ids(all_episodes, keep_watched, last_watched_id)
+        if protected_ids is not None:
+            # Always protect whatever was just fetched for "next up", even
+            # though it usually won't have a file yet - guards against the
+            # rare case where it's already downloaded (e.g. a fast/cached
+            # grab) and would otherwise fall outside the keep window.
+            protected_ids |= set(next_episode_ids) | {last_watched_id}
+            episodes_to_delete = [
+                ep['episodeFileId'] for ep in all_episodes
+                if ep['hasFile'] and ep['id'] not in protected_ids and 'episodeFileId' in ep
+            ]
+            delete_episodes_in_sonarr(episodes_to_delete)
 def process_new_series_from_watchlist(series_id, rule):
     """
     Process a newly added series from watchlist based on rule parameters.

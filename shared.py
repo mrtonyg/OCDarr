@@ -112,8 +112,6 @@ def load_config():
                 'full_seasons': {
                     'get_option': 'season',
                     'action_option': 'monitor',
-                    'keep_watched': 'season',
-                    'monitor_watched': False,
                     'series': []
                 }
             },

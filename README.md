@@ -5,7 +5,7 @@ Dev branch is developmental, consider it beta
 
 ## OCDarr: Precision Episode Management for Sonarr 
 
-OCDarr is a smart media assistant that gives you episode-by-episode control over your library, automatically preparing what you want to watch next while cleaning up what you've already seen.
+OCDarr is a smart media assistant that gives you episode-by-episode control over your library, automatically preparing the next episodes across season boundaries the moment you start watching. It's designed to complement a scheduled cleanup tool like Maintainerr, not replace it: OCDarr handles the real-time "what's next" side, on a per-watch-event trigger; long-term library retention/cleanup is intentionally left to a tool built for that job. (Optional, opt-in per-rule deletion is still available if you want OCDarr to also manage a tight trailing window — see Rule Components below — but it's off by default.)
 
 ## Navigation Features 
 
@@ -56,13 +56,13 @@ Most media management tools operate on an all-or-nothing approach. OCDarr revolu
 - monitor: Passive tracking
 - search: Active download and monitoring
 
-**Keep Watched**: Manage post-viewing library
+**Keep Watched** *(optional, opt-in — leave blank to let Maintainerr handle library cleanup)*: deletes old episodes when set
 - 1: Keep only the last watched episode
-- 2: Keep last two episodes
-- season: Retain current season
-- all: Keep everything
+- 2: Keep last two episodes (across season boundaries — the last N watched, not "N per season")
+- season: Retain the current and later seasons, delete everything before it
+- all: Keep everything (equivalent to leaving it blank)
 
-**Monitor Watched**: Tracking behavior after watching
+**Monitor Watched** *(optional, opt-in — leave unset to not manage this at all)*: tracking behavior after watching
 - true: Keep watched episodes monitored
 - false: Automatically unmonitor after viewing
                                     
@@ -94,41 +94,18 @@ Without "episodes" tag:
 Example: You're watching "Breaking Bad"
   
 You want:
-- Only the next episode ready
-- Automatically clean up watched episodes
-- Keep the current season
-- Stop tracking after you've finished
+- Only the next episode ready, even across a season boundary
+- Nothing else touched — Maintainerr handles cleanup once episodes go stale
 
 Traditional Solution: Download entire seasons, manual cleanup  
-OCDarr Solution: Intelligent, automated, personalized management
+OCDarr Solution: Fill ahead automatically, in real time, the moment you start watching
 
 ### 🔑 Key Differentiators
 
 🎯 Episode-level control  
-🧹 Automatic library management  
+🚀 Proactive, real-time episode preparation across season boundaries  
 🔧 Highly configurable rules  
-🚀 Proactive episode preparation  
-📰 RSS News Tickers
-
-OCDarr isn't just a tool—it's your personal media librarian.
-## 📰 RSS News Tickers
-
-OCDarr includes customizable RSS tickers in each main section that display relevant media news and updates:
-
-- **Shows Tab**: Displays TV industry news via TVLine's feed
-- **Movies Tab**: Shows movie trailer updates from FilmJabber
-- **Plex Tab**: Displays upcoming media releases from ComingSoon.net
-
-### Features:
-- Auto-scrolling text tickers present the latest entertainment headlines
-- Each section has its own topic-focused feed
-- Configurable via settings icon (desktop only)
-- Hidden on mobile devices to maximize screen space
-- Preset feed options or custom RSS URL support
-
-Tickers automatically refresh every 30 minutes to ensure you always see the latest entertainment news without leaving OCDarr.
-
-> 💡 **Tip**: The Plex section ticker would be a great place to add a friends' watchlist feed if you're using a service that provides RSS feeds of user activity.
+🤝 Complements Maintainerr instead of duplicating its cleanup role
 
 ### Interface Preview!
 [ocdarr](https://github.com/user-attachments/assets/5b97f9f3-bd2a-4df7-8fc5-1e9873e7d4fa)
@@ -274,28 +251,28 @@ Docker image: [vansmak/ocdarr:amd64_dev](https://hub.docker.com/r/vansmak/ocdarr
 📝 Rules System
 Create rules using the OCDarr website (start with Default rule)
 
-Rules define how OCDarr manages each show. Each rule has four components:
+Rules define how OCDarr manages each show. Every rule always has two required components (this is the "fill ahead" behavior that's OCDarr's whole job) plus two optional, opt-in ones for anyone who wants OCDarr to also manage a tight trailing window instead of leaving all cleanup to Maintainerr:
 
-Get Option (get_option): 
+Get Option (get_option) — required:
 
   1 - Get only the next episode
   3 - Get next three episodes
   season - Get full seasons
   all - Get everything upcoming  
 
-Action Option (action_option):
+Action Option (action_option) — required:
 
   monitor - Only monitor episodes
   search - Monitor and actively search
 
-Keep Watched (keep_watched):
+Keep Watched (keep_watched) — optional, omit to disable (recommended: let Maintainerr handle cleanup):
 
   1 - Keep only last watched episode
-  2 - Keep the last 2, etc
-  season - Keep current season
-  all - Keep everything
+  2 - Keep the last 2, etc. (across season boundaries)
+  season - Keep the current and later seasons, delete everything before it
+  all - Keep everything (same as omitting it)
 
-Monitor Watched (monitor_watched):
+Monitor Watched (monitor_watched) — optional, omit to not manage this at all:
 
   true - Keep watched episodes monitored
   false - Unmonitor after watching
@@ -304,14 +281,12 @@ Rule Assignment
 Shows can get rules in two ways:
 Default Rule: Applied if no other rule matches
 This is the first rule you should edit to how you want most shows added as it will be applied if no other rule is set.
-For example, a typical Default rule might be:
+For example, a typical Default rule (fill-ahead only, no cleanup) might be:
 ```
 "rules": {
     "Default": {
         "get_option": "1",
-        "action_option": "search",
-        "keep_watched": "1",
-        "monitor_watched": true
+        "action_option": "search"
     }
 }
 ```

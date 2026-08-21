@@ -289,10 +289,12 @@ function loadRule() {
         const keepWatchedEl = document.getElementById('keep_watched');
         const monitorWatchedEl = document.getElementById('monitor_watched');
         
+        // keep_watched/monitor_watched are optional, opt-in fields - a rule
+        // may not have them at all, which means "not managed" (blank/"").
         if (getOptionEl) getOptionEl.value = rule ? rule.get_option : '';
         if (actionOptionEl) actionOptionEl.value = rule ? rule.action_option : 'monitor';
-        if (keepWatchedEl) keepWatchedEl.value = rule ? rule.keep_watched : '';
-        if (monitorWatchedEl) monitorWatchedEl.value = rule ? rule.monitor_watched.toString() : 'false';
+        if (keepWatchedEl) keepWatchedEl.value = (rule && rule.keep_watched) ? rule.keep_watched : '';
+        if (monitorWatchedEl) monitorWatchedEl.value = (rule && rule.monitor_watched !== undefined) ? rule.monitor_watched.toString() : '';
     } catch (error) {
         console.error("Error loading rule:", error);
     }
@@ -309,8 +311,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Validate get_option/keep_watched before letting the rule form submit -
-// they only accept 'season', 'all', or a whole number.
+// Validate get_option/keep_watched before letting the rule form submit.
+// get_option is required (it's what "fill ahead" always needs); keep_watched
+// is optional/opt-in - blank just means "don't delete anything" - but if
+// something IS entered, it must be 'season', 'all', or a whole number.
 document.addEventListener('DOMContentLoaded', function() {
     const settingsForm = document.getElementById('settings-form');
     if (!settingsForm) return;
@@ -321,13 +325,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const getOption = document.getElementById('get_option');
         const keepWatched = document.getElementById('keep_watched');
 
-        for (const field of [getOption, keepWatched]) {
-            if (field && !validPattern.test(field.value.trim())) {
-                e.preventDefault();
-                alert(`"${field.value}" isn't valid for "${field.previousElementSibling.textContent}" - enter 'season', 'all', or a whole number.`);
-                field.focus();
-                return;
-            }
+        if (getOption && !validPattern.test(getOption.value.trim())) {
+            e.preventDefault();
+            alert(`"${getOption.value}" isn't valid for "${getOption.previousElementSibling.textContent}" - enter 'season', 'all', or a whole number.`);
+            getOption.focus();
+            return;
+        }
+
+        if (keepWatched && keepWatched.value.trim() && !validPattern.test(keepWatched.value.trim())) {
+            e.preventDefault();
+            alert(`"${keepWatched.value}" isn't valid for "${keepWatched.previousElementSibling.textContent}" - leave it blank, or enter 'season', 'all', or a whole number.`);
+            keepWatched.focus();
+            return;
         }
     });
 });
@@ -357,9 +366,9 @@ function toggleNewRuleName() {
             if (field) {
                 if (fieldId === 'action_option') {
                     field.value = 'monitor';
-                } else if (fieldId === 'monitor_watched') {
-                    field.value = 'false';
                 } else {
+                    // keep_watched and monitor_watched default to "not
+                    // managed" (blank) for a new rule - opt-in only.
                     field.value = '';
                 }
             }
