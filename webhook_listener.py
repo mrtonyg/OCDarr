@@ -1,4 +1,4 @@
-from flask import render_template, request
+from flask import render_template, request, jsonify
 import os
 import json
 from datetime import datetime
@@ -42,9 +42,27 @@ def check_service_status(url):
 
     return "Offline"
 
+def get_service_status():
+    """Check reachability of every integration the dashboard depends on."""
+    status = {
+        'sonarr': check_service_status(shared.SONARR_URL) if shared.SONARR_URL else "Offline",
+        'radarr': check_service_status(shared.RADARR_URL) if shared.RADARR_URL else "Offline",
+        'jellyfin': check_service_status(shared.jellyfin_api.jellyfin_url) if shared.jellyfin_api.jellyfin_url else "Offline",
+    }
+    if shared.JELLYSEERR_URL:
+        status['jellyseerr'] = check_service_status(shared.JELLYSEERR_URL)
+    return status
+
+@app.route('/health')
+def health():
+    status = get_service_status()
+    overall_ok = all(value == "Online" for value in status.values())
+    return jsonify({'status': 'ok' if overall_ok else 'degraded', 'services': status}), (200 if overall_ok else 503)
+
 @app.route('/')
 def home():
     config = shared.load_config()
+    service_status = get_service_status()
 
     # Load Sonarr data
     sonarr_preferences = sonarr_utils.load_preferences()
@@ -169,7 +187,8 @@ def home():
                         has_pending_requests=has_pending_requests,
                         radarr_profiles=radarr_profiles,
                         sonarr_profiles=sonarr_profiles,
-                        last_processed_show=last_processed_show)
+                        last_processed_show=last_processed_show,
+                        service_status=service_status)
 
 def initialize_episeerr():
     """Initialize episode tag and check for unmonitored downloads."""

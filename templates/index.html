@@ -309,8 +309,19 @@
         <section id="dashboard-tab" class="main-tab">
             <h4>Dashboard</h4>
             <div class="content-row">
-                <!-- Dashboard content here -->
-                <p>Welcome to OCDarr Dashboard!</p>
+                <div class="card bg-dark">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-3">Service Status</h6>
+                        <ul class="list-unstyled mb-0">
+                            {% for service, state in service_status.items() %}
+                            <li class="mb-2">
+                                <span class="badge {{ 'badge-success' if state == 'Online' else 'badge-danger' }}" style="width: 10px; height: 10px; display: inline-block; border-radius: 50%; padding: 0; margin-right: 8px;"></span>
+                                {{ service|capitalize }}: {{ state }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
             </div>
         </section>
         <!-- Shows Tab -->

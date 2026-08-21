@@ -45,21 +45,6 @@ config = load_config()
 # Define global variables based on environment settings
 SONARR_URL = os.getenv('SONARR_URL')
 SONARR_API_KEY = os.getenv('SONARR_API_KEY')
-LOG_PATH = os.getenv('LOG_PATH', '/app/logs/app.log')
-MISSING_LOG_PATH = os.getenv('MISSING_LOG_PATH', '/app/logs/missing.log')
-
-
-# Setup logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger()
-handler = logging.FileHandler(LOG_PATH)
-logger.addHandler(handler)
-missing_logger = logging.getLogger('missing')
-missing_handler = logging.FileHandler(MISSING_LOG_PATH)
-missing_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-missing_logger.addHandler(missing_handler)
-
-
 
 def get_server_activity():
     """Read current viewing details from server webhook stored data."""
