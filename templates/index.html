@@ -627,6 +627,21 @@
     
     <!-- Main settings section (Profile + Rule Management) -->
     <div id="main-settings" class="settings-view">
+        <!-- Connections Section (read-only, no tokens/keys shown) -->
+        <div class="card mb-4">
+            <div class="card-header bg-dark">
+                <h5 class="mb-0 text-light">Connections</h5>
+            </div>
+            <div class="card-body bg-dark text-light">
+                <ul class="list-unstyled mb-0">
+                    {% for name, url in connection_urls.items() %}
+                    <li class="mb-1"><strong>{{ name }}:</strong> {{ url or 'Not configured' }}</li>
+                    {% endfor %}
+                    <li class="mb-1"><strong>Last webhook from Tautulli:</strong> {{ last_webhook_display }}</li>
+                </ul>
+            </div>
+        </div>
+
         <!-- Profile Settings Section -->
         <div class="card mb-4">
             <div class="card-header bg-dark">
@@ -680,6 +695,7 @@
                     <div class="form-group">
                         <label for="get_option">How many more episodes to get?:</label>
                         <input type="text" id="get_option" name="get_option" placeholder="Enter 'season', 'all', or a number" class="form-control" value="">
+                        <small class="form-text text-muted">Must be exactly <code>season</code>, <code>all</code>, or a whole number (e.g. <code>3</code>).</small>
                     </div>
                     <div class="form-group">
                         <label for="action_option">Action for Episodes:</label>
@@ -691,6 +707,7 @@
                     <div class="form-group">
                         <label for="keep_watched">How many episodes to keep?:</label>
                         <input type="text" id="keep_watched" name="keep_watched" placeholder="Enter 'season', 'all', or a number" class="form-control" value="">
+                        <small class="form-text text-muted">Must be exactly <code>season</code>, <code>all</code>, or a whole number (e.g. <code>3</code>).</small>
                     </div>
                     <div class="form-group">
                         <label for="monitor_watched">Keep monitored if watched:</label>

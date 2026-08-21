@@ -416,6 +416,18 @@ def handle_server_webhook(secret):
             with open(os.path.join(temp_dir, 'data_from_server.json'), 'w') as f:
                 json.dump(plex_data, f)
 
+            # Record that a webhook call actually arrived, for the Settings page
+            try:
+                with open(shared.LAST_WEBHOOK_FILE, 'w') as f:
+                    json.dump({
+                        'timestamp': datetime.now(timezone.utc).isoformat(),
+                        'title': plex_data.get('server_title'),
+                        'season': plex_data.get('server_season_num'),
+                        'episode': plex_data.get('server_ep_num'),
+                    }, f)
+            except Exception as e:
+                shared.app.logger.error(f"Failed to record last webhook timestamp: {str(e)}")
+
             result = subprocess.run(["python3", os.path.join(os.getcwd(), "servertosonarr.py")], capture_output=True, text=True)
             if result.stderr:
                 shared.app.logger.error(f"Servertosonarr.py error: {result.stderr}")

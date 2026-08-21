@@ -149,6 +149,22 @@ def home():
     except Exception as e:
         app.logger.error(f"Error loading last processed show: {str(e)}")
 
+    # Get the last time a webhook actually arrived from Tautulli/Plex
+    last_webhook_display = "Never received"
+    try:
+        if os.path.exists(shared.LAST_WEBHOOK_FILE):
+            with open(shared.LAST_WEBHOOK_FILE, 'r') as f:
+                last_webhook = json.load(f)
+            webhook_time = datetime.fromisoformat(last_webhook['timestamp'])
+            local_str = webhook_time.strftime('%Y-%m-%d %H:%M:%S %Z')
+            title = last_webhook.get('title')
+            if title:
+                last_webhook_display = f"{local_str} ({title} S{last_webhook.get('season')}E{last_webhook.get('episode')})"
+            else:
+                last_webhook_display = local_str
+    except Exception as e:
+        app.logger.error(f"Error loading last webhook info: {str(e)}")
+
     # Map series to rules
     rules_mapping = {str(series_id): rule_name for rule_name, details in config['rules'].items() for series_id in details.get('series', [])}
 
@@ -179,6 +195,13 @@ def home():
     except Exception as e:
         app.logger.error(f"Error fetching Sonarr profiles: {str(e)}")
 
+    connection_urls = {
+        'Sonarr': shared.SONARR_URL,
+        'Radarr': shared.RADARR_URL,
+        'Plex': os.getenv('PLEX_URL', ''),
+        'Jellyseerr': shared.JELLYSEERR_URL,
+    }
+
     return render_template('index.html',
                         config=config,
                         current_series=combined_watching,
@@ -187,12 +210,14 @@ def home():
                         sonarr_url=shared.SONARR_PUBLIC_URL,
                         radarr_url=shared.RADARR_URL,
                         jellyseerr_url=shared.JELLYSEERR_URL,
+                        connection_urls=connection_urls,
                         rule=request.args.get('rule', 'full_seasons'),
                         pending_requests=pending_requests,
                         has_pending_requests=has_pending_requests,
                         radarr_profiles=radarr_profiles,
                         sonarr_profiles=sonarr_profiles,
                         last_processed_show=last_processed_show,
+                        last_webhook_display=last_webhook_display,
                         service_status=service_status)
 
 def initialize_episeerr():

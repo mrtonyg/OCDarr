@@ -50,6 +50,9 @@ os.makedirs(REQUESTS_DIR, exist_ok=True)
 LAST_PROCESSED_FILE = os.path.join(os.getcwd(), 'data', 'last_processed.json')
 os.makedirs(os.path.dirname(LAST_PROCESSED_FILE), exist_ok=True)
 
+LAST_WEBHOOK_FILE = os.path.join(os.getcwd(), 'data', 'last_webhook.json')
+os.makedirs(os.path.dirname(LAST_WEBHOOK_FILE), exist_ok=True)
+
 # Initialize the Jellyseerr API client
 jellyseerr_api = JellyseerrAPI()
 
