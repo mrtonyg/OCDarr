@@ -65,7 +65,9 @@ Most media management tools operate on an all-or-nothing approach. OCDarr revolu
 **Monitor Watched** *(optional, opt-in — leave unset to not manage this at all)*: tracking behavior after watching
 - true: Keep watched episodes monitored
 - false: Automatically unmonitor after viewing
-                                    
+
+> ✅ **Fill ahead only, no deletion (the default, recommended if you use Maintainerr)**: set **Get Option** and **Action Option**, leave **Keep Watched** blank, leave **Monitor Watched** set to "Not managed". OCDarr will only ever fetch/monitor upcoming episodes — it never touches an already-downloaded episode.
+
 ### 🎬 Adaptive Episode Request Workflows
 
 OCDarr supports multiple request scenarios with intelligent handling:
