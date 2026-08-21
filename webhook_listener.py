@@ -67,18 +67,22 @@ def health():
 @app.route('/')
 def home():
     config = shared.load_config()
-    service_status = get_service_status()
 
-    # Load Sonarr data
+    # Load Sonarr data. get_series_list() is fetched once here and reused
+    # by the other two calls - they used to each independently re-fetch
+    # Sonarr's full series list, meaning the same data was fetched 3 times
+    # on every dashboard load.
     sonarr_preferences = sonarr_utils.load_preferences()
-    current_series = sonarr_utils.fetch_series_and_episodes(sonarr_preferences)
-    upcoming_premieres = sonarr_utils.fetch_upcoming_premieres(sonarr_preferences)
     all_series = sonarr_utils.get_series_list(sonarr_preferences)
+    current_series = sonarr_utils.fetch_series_and_episodes(sonarr_preferences, series_list=all_series)
+    upcoming_premieres = sonarr_utils.fetch_upcoming_premieres(sonarr_preferences, series_list=all_series)
 
-    # Load Radarr data
+    # Load Radarr data. Same dedup: get_movie_list() fetched once, reused by
+    # both calls below (previously fetched independently, twice).
     radarr_preferences = radarr_utils.load_preferences()
-    recent_movies = radarr_utils.fetch_recent_movies(radarr_preferences)
-    upcoming_movies = radarr_utils.fetch_upcoming_movies(radarr_preferences)
+    all_movies = radarr_utils.get_movie_list(radarr_preferences)
+    recent_movies = radarr_utils.fetch_recent_movies(radarr_preferences, movies=all_movies)
+    upcoming_movies = radarr_utils.fetch_upcoming_movies(radarr_preferences, movies=all_movies)
 
     # Add type to TV shows for consistent handling
     for series in current_series:
@@ -217,8 +221,7 @@ def home():
                         radarr_profiles=radarr_profiles,
                         sonarr_profiles=sonarr_profiles,
                         last_processed_show=last_processed_show,
-                        last_webhook_display=last_webhook_display,
-                        service_status=service_status)
+                        last_webhook_display=last_webhook_display)
 
 def initialize_episeerr():
     """Initialize episode tag and check for unmonitored downloads."""

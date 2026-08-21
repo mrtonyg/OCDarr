@@ -1,7 +1,32 @@
+// Service status used to be computed server-side in the / route on every
+// page load (3 blocking HTTP calls with a 5s timeout each) - moved to a
+// client-side fetch against /health so a slow/unreachable service doesn't
+// hold up the whole dashboard render.
+function loadServiceStatus() {
+    const list = document.getElementById('service-status-list');
+    if (!list) return;
+
+    fetch('/health')
+        .then(response => response.json())
+        .then(data => {
+            const services = data.services || {};
+            list.innerHTML = Object.entries(services).map(([service, state]) => `
+                <li class="mb-2">
+                    <span class="badge ${state === 'Online' ? 'badge-success' : 'badge-danger'}" style="width: 10px; height: 10px; display: inline-block; border-radius: 50%; padding: 0; margin-right: 8px;"></span>
+                    ${service.charAt(0).toUpperCase() + service.slice(1)}: ${state}
+                </li>
+            `).join('');
+        })
+        .catch(() => {
+            list.innerHTML = '<li class="mb-2 text-muted">Unable to check service status.</li>';
+        });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize - load content
     loadPopularShows();
     loadPopularMovies();
+    loadServiceStatus();
 
     // Add event listeners for episode selection in requests section
     const selectAllButtons = document.querySelectorAll('.select-all');

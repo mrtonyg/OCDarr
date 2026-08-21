@@ -90,16 +90,22 @@ def fetch_episode_file_details(episode_file_id):
     response = requests.get(episode_file_url, headers=headers)
     return response.json() if response.ok else None
 
-def fetch_series_and_episodes(preferences):
+def fetch_series_and_episodes(preferences, series_list=None):
+    """
+    series_list can be passed in (e.g. already fetched via get_series_list())
+    to avoid re-fetching Sonarr's full series list - the / dashboard route
+    used to call this, fetch_upcoming_premieres(), and get_series_list()
+    each independently, fetching the same data 3 times per page load.
+    """
     SONARR_URL = preferences['SONARR_URL']
     SONARR_API_KEY = preferences['SONARR_API_KEY']
-    
-    series_url = f"{SONARR_URL}/api/v3/series"
+
     headers = {'X-Api-Key': SONARR_API_KEY}
     active_series = []
 
-    series_response = requests.get(series_url, headers=headers)
-    series_list = series_response.json() if series_response.ok else []
+    if series_list is None:
+        series_response = requests.get(f"{SONARR_URL}/api/v3/series", headers=headers)
+        series_list = series_response.json() if series_response.ok else []
 
     for series in series_list:
         episodes_url = f"{SONARR_URL}/api/v3/episode"
@@ -125,17 +131,19 @@ def fetch_series_and_episodes(preferences):
     active_series.sort(key=lambda series: series['dateAdded'], reverse=True)
     return active_series[:MAX_SHOWS_ITEMS]
 
-def fetch_upcoming_premieres(preferences):
+def fetch_upcoming_premieres(preferences, series_list=None):
+    """series_list can be passed in to avoid re-fetching - see fetch_series_and_episodes()."""
     SONARR_URL = preferences['SONARR_URL']
     SONARR_API_KEY = preferences['SONARR_API_KEY']
-    
-    series_url = f"{SONARR_URL}/api/v3/series"
+
     headers = {'X-Api-Key': SONARR_API_KEY}
     upcoming_premieres = []
 
-    series_response = requests.get(series_url, headers=headers)
-    if series_response.ok:
-        series_list = series_response.json()
+    if series_list is None:
+        series_response = requests.get(f"{SONARR_URL}/api/v3/series", headers=headers)
+        series_list = series_response.json() if series_response.ok else []
+
+    if series_list:
         for series in series_list:
             if 'nextAiring' in series:
                 next_airing_dt = datetime.fromisoformat(series['nextAiring'].replace('Z', '+00:00'))

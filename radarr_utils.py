@@ -49,27 +49,32 @@ def get_movie_list(preferences):
         logger.error(f"Error fetching movie list: {str(e)}")
         return []
 
-def fetch_recent_movies(preferences, limit=None):
+def fetch_recent_movies(preferences, limit=None, movies=None):
     """
     Fetch recently downloaded movies from Radarr.
     Returns a list of dictionaries with movie details.
+
+    movies can be passed in (e.g. already fetched via get_movie_list()) to
+    avoid re-fetching Radarr's full movie list - the / dashboard route used
+    to call this and fetch_upcoming_movies() independently, fetching the
+    same data twice per page load.
     """
     # Use environment variable if no specific limit is provided
     if limit is None:
         limit = MAX_MOVIES_ITEMS
-        
+
     RADARR_URL = preferences['RADARR_URL']
     RADARR_API_KEY = preferences['RADARR_API_KEY']
-    
-    movie_url = f"{RADARR_URL}/api/v3/movie"
+
     headers = {'X-Api-Key': RADARR_API_KEY}
     recent_movies = []
-    
+
     try:
-        movie_response = requests.get(movie_url, headers=headers)
-        if movie_response.ok:
-            movies = movie_response.json()
-            
+        if movies is None:
+            movie_response = requests.get(f"{RADARR_URL}/api/v3/movie", headers=headers)
+            movies = movie_response.json() if movie_response.ok else None
+
+        if movies is not None:
             # Filter for movies that have files (downloaded)
             downloaded_movies = [
                 movie for movie in movies 
@@ -103,22 +108,25 @@ def fetch_recent_movies(preferences, limit=None):
         logger.error(f"Error fetching downloaded movies: {str(e)}")
         return []
 
-def fetch_upcoming_movies(preferences):
+def fetch_upcoming_movies(preferences, movies=None):
     """
     Fetch upcoming movies that are not yet downloaded.
     Returns a list of dictionaries with upcoming movie details.
+
+    movies can be passed in to avoid re-fetching - see fetch_recent_movies().
     """
     RADARR_URL = preferences['RADARR_URL']
     RADARR_API_KEY = preferences['RADARR_API_KEY']
-    
-    movie_url = f"{RADARR_URL}/api/v3/movie"
+
     headers = {'X-Api-Key': RADARR_API_KEY}
     upcoming_movies = []
-    
+
     try:
-        movie_response = requests.get(movie_url, headers=headers)
-        if movie_response.ok:
-            movies = movie_response.json()
+        if movies is None:
+            movie_response = requests.get(f"{RADARR_URL}/api/v3/movie", headers=headers)
+            movies = movie_response.json() if movie_response.ok else None
+
+        if movies is not None:
             now = datetime.now(timezone.utc)  # Make now timezone-aware
             
             # Include all movies that aren't downloaded yet
