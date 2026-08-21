@@ -138,23 +138,52 @@ def unmonitor_episodes(episode_ids):
     """Unmonitor specified episodes in Sonarr."""
     monitor_episodes(episode_ids, False)
 
-def find_episodes_to_delete(all_episodes, keep_watched, last_watched_id):
-    """Find episodes to delete, ensuring they're not in the keep list and have files."""
-    episodes_to_delete = []
-    if keep_watched == "all":
-        return episodes_to_delete  # Skip deletion logic entirely if "all" is specified.
-    elif keep_watched == "season":
-        last_watched_season = next(ep['seasonNumber'] for ep in all_episodes if ep['id'] == last_watched_id)
-        episodes_to_delete = [ep for ep in all_episodes if ep['seasonNumber'] < last_watched_season and ep['hasFile']]
-    elif isinstance(keep_watched, int):
-        # Sort episodes by date, keeping only the specified count, including and prior to the last watched.
-        sorted_episodes = sorted(all_episodes, key=lambda ep: (ep['seasonNumber'], ep['episodeNumber']), reverse=True)
-        last_watched_index = next((i for i, ep in enumerate(sorted_episodes) if ep['id'] == last_watched_id), None)
-        keep_range = sorted_episodes[max(0, last_watched_index - keep_watched + 1):last_watched_index + 1]
-        keep_ids = {ep['id'] for ep in keep_range}
-        episodes_to_delete = [ep for ep in all_episodes if ep['id'] not in keep_ids and ep['hasFile']]
+def get_protected_episode_ids(all_episodes, keep_watched, last_watched_id):
+    """
+    Determine which episode IDs 'keep_watched' says must survive deletion.
 
-    return [ep['episodeFileId'] for ep in episodes_to_delete if 'episodeFileId' in ep]
+    Returns None to mean "keep everything, don't delete anything" (this is
+    the case for keep_watched == 'all', and the safe fallback for an
+    unrecognized value - better to keep too much than silently wipe a
+    library). Otherwise returns the set of episode IDs to protect.
+
+    For a numeric keep_watched (stored as a string, e.g. "2", since it
+    comes straight out of the rule-editing form), this keeps the last N
+    episodes chronologically up to and including whichever episode was
+    just watched, across season boundaries - i.e. "keep the last N
+    watched episodes" the way the setting name reads. It does NOT mean
+    "delete everything except whatever's about to be fetched next", which
+    is what a prior bug here actually did (see incident 2026-08-21: wiped
+    ~31 episodes across 2 shows because keep_watched was never actually
+    read as a count anywhere in this code path).
+    """
+    if keep_watched == "all":
+        return None
+
+    if keep_watched == "season":
+        last_watched_season = next(
+            (ep['seasonNumber'] for ep in all_episodes if ep['id'] == last_watched_id), None
+        )
+        if last_watched_season is None:
+            return None
+        return {ep['id'] for ep in all_episodes if ep['seasonNumber'] >= last_watched_season}
+
+    try:
+        keep_count = int(keep_watched)
+    except (TypeError, ValueError):
+        logger.error(f"Invalid keep_watched value '{keep_watched}'; keeping all episodes to avoid unintended deletion.")
+        return None
+
+    sorted_episodes = sorted(all_episodes, key=lambda ep: (ep['seasonNumber'], ep['episodeNumber']))
+    last_watched_index = next(
+        (i for i, ep in enumerate(sorted_episodes) if ep['id'] == last_watched_id), None
+    )
+    if last_watched_index is None:
+        return None
+
+    start = max(0, last_watched_index - keep_count + 1)
+    keep_range = sorted_episodes[start:last_watched_index + 1]
+    return {ep['id'] for ep in keep_range}
 
 def delete_episodes_in_sonarr(episode_file_ids):
     """Delete specified episodes in Sonarr."""
@@ -222,25 +251,6 @@ def fetch_all_episodes(series_id):
     logger.error("Failed to fetch all episodes.")
     return []
 
-def delete_old_episodes(series_id, keep_episode_ids, rule):
-    """Delete old episodes that are not in the keep list."""
-    all_episodes = fetch_all_episodes(series_id)
-    episodes_with_files = [ep for ep in all_episodes if ep['hasFile']]
-
-    keep_watched = rule.get('keep_watched', 'all')
-
-    if keep_watched == "all":
-        logger.info("No episodes to delete as keep_watched is set to 'all'.")
-        return
-
-    if keep_watched == "season":
-        last_watched_season = max(ep['seasonNumber'] for ep in all_episodes if ep['id'] in keep_episode_ids)
-        episodes_to_delete = [ep['episodeFileId'] for ep in episodes_with_files if ep['seasonNumber'] < last_watched_season and ep['id'] not in keep_episode_ids]
-    else:
-        episodes_to_delete = [ep['episodeFileId'] for ep in episodes_with_files if ep['id'] not in keep_episode_ids]
-
-    delete_episodes_in_sonarr(episodes_to_delete)
-
 def process_episodes_based_on_rules(series_id, season_number, episode_number, rule):
     """Fetch, monitor/search, and delete episodes based on defined rules."""
     all_episodes = fetch_all_episodes(series_id)
@@ -252,12 +262,18 @@ def process_episodes_based_on_rules(series_id, season_number, episode_number, ru
     next_episode_ids = fetch_next_episodes(series_id, season_number, episode_number, rule['get_option'])
     monitor_or_search_episodes(next_episode_ids, rule['action_option'])
 
-    episodes_to_delete = find_episodes_to_delete(all_episodes, rule['keep_watched'], last_watched_id)
-    delete_episodes_in_sonarr(episodes_to_delete)
-
-    if rule['keep_watched'] != "all":
-        keep_episode_ids = next_episode_ids + [last_watched_id]
-        delete_old_episodes(series_id, keep_episode_ids, rule)
+    protected_ids = get_protected_episode_ids(all_episodes, rule['keep_watched'], last_watched_id)
+    if protected_ids is not None:
+        # Always protect whatever was just fetched for "next up", even
+        # though it usually won't have a file yet - guards against the
+        # rare case where it's already downloaded (e.g. a fast/cached
+        # grab) and would otherwise fall outside the keep window.
+        protected_ids |= set(next_episode_ids) | {last_watched_id}
+        episodes_to_delete = [
+            ep['episodeFileId'] for ep in all_episodes
+            if ep['hasFile'] and ep['id'] not in protected_ids and 'episodeFileId' in ep
+        ]
+        delete_episodes_in_sonarr(episodes_to_delete)
 def process_new_series_from_watchlist(series_id, rule):
     """
     Process a newly added series from watchlist based on rule parameters.
